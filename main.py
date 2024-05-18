@@ -584,10 +584,10 @@ slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_e
 slider_max_move.place(x=10, y=425)
 
 label_fps = ctk.CTkLabel(root, text="FPS:")
-label_fps.place(x=10, y=500)
+label_fps.place(x=10, y=670)
 
 combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
-combobox_fps.place(x=10, y=525)
+combobox_fps.place(x=10, y=700)
 combobox_fps.set(str(settings['max_fps']))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
