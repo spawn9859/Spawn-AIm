@@ -692,6 +692,11 @@ label_mouse_input.place(x=310, y=480)
 combobox_arduino = ctk.CTkComboBox(root, values=["COM1"], command=combobox_arduino_callback, state="readonly")
 combobox_arduino.place(x=310, y=510)
 
+def save_settings():
+    with open(os.path.join(script_directory, "aimbotSettings", "default.json"), "w") as f:
+        json.dump(settings, f, indent=4)
+    pr_green("Settings saved to aimbotSettings/default.json")
+
 keybindings = ctk.CTkToplevel()
 keybindings.title("Spawn-Aim Keybinder")
 keybindings.geometry(f"400x160+{root.winfo_x() + 40}+{root.winfo_y() + 100}")
@@ -720,6 +725,9 @@ combobox_mouse_quit_bind.place(x=200, y=50)
 
 combobox_mouse_activation_bind.set("Select special")
 combobox_mouse_quit_bind.set("Select special")
+
+button_save_settings = ctk.CTkButton(root, text="Save Settings", command=save_settings)
+button_save_settings.place(x=10, y=750)
 
 
 def set_thread_name(thread, name):
