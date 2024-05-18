@@ -948,3 +948,5 @@ def main(**argv):
         targets.clear()
         distances.clear()
         coordinates.clear()
+if __name__ == "__main__":
+    main(settingsProfile="default", yoloVersion=5, version=0)
