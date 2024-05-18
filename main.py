@@ -25,6 +25,8 @@ import cv2
 import sys
 import os
 import re
+import ctypes
+import threading
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
 if not os.path.exists(f"{script_directory}/yolov5"):
@@ -715,7 +717,16 @@ def set_thread_name(thread, name):
         pass
     thread.name = name
 
+def set_thread_name(thread, name):
+    try:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread.ident), ctypes.py_object(SystemExit))
+    except (SystemExit, ValueError):
+        pass
+    thread.name = name
+
 def main(**argv):
+    main_thread = threading.current_thread()
+    set_thread_name(main_thread, "MainThread")
     main_thread = threading.current_thread()
     set_thread_name(main_thread, "MainThread")
     global model, screen, settings, overlay, canvas
