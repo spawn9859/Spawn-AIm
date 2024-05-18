@@ -1,0 +1,11 @@
+ultralytics
+pywin32
+bettercam
+customtkinter
+onnx
+onnxsim
+keyboard
+pyserial
+pygame
+openvino-dev
+colorama
