@@ -39,7 +39,7 @@ with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_fil
 with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
     settings = json.load(json_file)
 
-model, screen, paid_tier, overlay, canvas, random_x, random_y, rzctl, arduino = None, None, 0, None, None, 0, 0, None, None
+model, screen, overlay, canvas, random_x, random_y, rzctl, arduino = None, None, None, None, 0, 0, None, None
 models_path = os.path.join(os.getenv("APPDATA"), "ai-aimbot-launcher", "models")
 launcher_models = [os.path.splitext(file)[0] for file in [file for file in os.listdir(models_path) if file.endswith(".pt")]]
 
@@ -697,9 +697,7 @@ combobox_mouse_quit_bind.set("Select special")
 
 
 def main(**argv):
-    global model, screen, paid_tier, settings, overlay, canvas, rzctl
-
-    paid_tier = argv['paidTier']
+    global model, screen, settings, overlay, canvas, rzctl
 
     pr_purple('''
   ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
@@ -817,32 +815,32 @@ def main(**argv):
     combobox_arduino.configure(values=ports)
     combobox_arduino.set(settings['arduino'])
 
-    checkbox_trigger_bot.configure(state="normal" if paid_tier >= 1 else "disabled")
-    checkbox_toggle.configure(state="normal" if paid_tier >= 2 else "disabled")
-    checkbox_recoil.configure(state="normal" if paid_tier >= 2 else "disabled")
-    checkbox_aim_shake.configure(state="normal" if paid_tier >= 2 else "disabled")
-    checkbox_overlay.configure(state="normal" if paid_tier >= 2 else "disabled")
-    checkbox_preview.configure(state="normal" if paid_tier >= 1 else "disabled")
-    checkbox_mask_left.configure(state="normal" if paid_tier >= 1 else "disabled")
-    checkbox_mask_right.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_sensitivity.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_headshot.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_trigger_bot.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_confidence.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_recoil_strength.configure(state="normal" if paid_tier >= 2 else "disabled")
-    slider_aim_shake_strength.configure(state="normal" if paid_tier >= 2 else "disabled")
-    slider_max_move.configure(state="normal" if paid_tier >= 2 else "disabled")
-    slider_mask_width.configure(state="normal" if paid_tier >= 1 else "disabled")
-    slider_mask_height.configure(state="normal" if paid_tier >= 1 else "disabled")
-    button_keybindings.configure(state="normal" if paid_tier >= 2 else "disabled")
-    button_reload.configure(state="normal" if paid_tier >= 2 else "disabled")
-    combobox_mouse_input.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_arduino.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_yolo_version.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_yolo_model.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_yolo_mode.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_yolo_device.configure(state="readonly" if paid_tier >= 2 else "disabled")
-    combobox_yolo_model_size.configure(state="readonly" if paid_tier >= 2 else "disabled")
+    checkbox_trigger_bot.configure(state="normal")
+    checkbox_toggle.configure(state="normal")
+    checkbox_recoil.configure(state="normal")
+    checkbox_aim_shake.configure(state="normal")
+    checkbox_overlay.configure(state="normal")
+    checkbox_preview.configure(state="normal")
+    checkbox_mask_left.configure(state="normal")
+    checkbox_mask_right.configure(state="normal")
+    slider_sensitivity.configure(state="normal")
+    slider_headshot.configure(state="normal")
+    slider_trigger_bot.configure(state="normal")
+    slider_confidence.configure(state="normal")
+    slider_recoil_strength.configure(state="normal")
+    slider_aim_shake_strength.configure(state="normal")
+    slider_max_move.configure(state="normal")
+    slider_mask_width.configure(state="normal")
+    slider_mask_height.configure(state="normal")
+    button_keybindings.configure(state="normal")
+    button_reload.configure(state="normal")
+    combobox_mouse_input.configure(state="readonly")
+    combobox_arduino.configure(state="readonly")
+    combobox_yolo_version.configure(state="readonly")
+    combobox_yolo_model.configure(state="readonly")
+    combobox_yolo_mode.configure(state="readonly")
+    combobox_yolo_device.configure(state="readonly")
+    combobox_yolo_model_size.configure(state="readonly")
 
     button_reload_event()
 
