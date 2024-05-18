@@ -167,6 +167,8 @@ def slider_max_move_event(value):
 
 def combobox_fps_callback(choice):
     settings['max_fps'] = int(choice)
+    with open(f"{script_directory}/configuration/config.json", 'w') as json_file:
+        json.dump(settings, json_file, indent=4)
 
 def slider_mask_width_event(value):
     label_mask_width.configure(text=f"Mask width: {round(value)} px")
@@ -582,10 +584,10 @@ slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_e
 slider_max_move.place(x=10, y=425)
 
 label_fps = ctk.CTkLabel(root, text="FPS:")
-label_fps.place(x=10, y=450)
+label_fps.place(x=10, y=500)
 
 combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
-combobox_fps.place(x=10, y=475)
+combobox_fps.place(x=10, y=525)
 combobox_fps.set(str(settings['max_fps']))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
