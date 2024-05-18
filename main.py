@@ -729,16 +729,8 @@ def set_thread_name(thread, name):
         pass
     thread.name = name
 
-def set_thread_name(thread, name):
-    try:
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread.ident), ctypes.py_object(SystemExit))
-    except (SystemExit, ValueError):
-        pass
-    thread.name = name
 
 def main(**argv):
-    main_thread = threading.current_thread()
-    set_thread_name(main_thread, "MainThread")
     main_thread = threading.current_thread()
     set_thread_name(main_thread, "MainThread")
     global model, screen, settings, overlay, canvas
@@ -895,10 +887,11 @@ def main(**argv):
     while True:
         if not main_thread.is_alive():
             break
-        pygame.event.pump()
         root.update()
         frame_count += 1
         np_frame = np.array(screen.get_latest_frame())
+        pygame.event.pump()
+
 
         if np_frame.shape[2] == 4:
             np_frame = np_frame[:, :, :3]
