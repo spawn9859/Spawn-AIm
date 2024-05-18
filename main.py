@@ -517,10 +517,22 @@ def send_targets():
 
 
 
+def start_drag(event):
+    global x_offset, y_offset
+    x_offset = event.x
+    y_offset = event.y
+
+def on_drag(event):
+    x = event.x_root - x_offset
+    y = event.y_root - y_offset
+    root.geometry(f"+{x}+{y}")
+
 root = ctk.CTk()
 root.title("Spawn-Aim")
 root.geometry("600x800+40+40")
 root.resizable(width=False, height=False)
+root.bind("<Button-1>", start_drag)
+root.bind("<B1-Motion>", on_drag)
 
 var_auto_aim = ctk.StringVar(value="off")
 checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=checkbox_auto_aim_event)
