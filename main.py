@@ -452,13 +452,12 @@ def extract_original_name(name):
 
 
 def mouse_click():
-    else:
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-        win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
+    win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
 
 def mouse_move(move_x, move_y, click):
-    elif settings['mouse_input'] == "arduino":
+    if settings['mouse_input'] == "arduino":
         arduino.write("{}:{}:{}x".format(move_x, move_y, click).encode())
     else:
         win32api.mouse_event(win32con.MOUSEEVENTF_MOVE, move_x, move_y, 0, 0)
