@@ -514,7 +514,7 @@ def send_targets():
 
 root = ctk.CTk()
 root.title("Spawn-Aim")
-root.geometry("480x680+40+40")
+root.geometry("600x800+40+40")
 root.resizable(width=False, height=False)
 
 var_auto_aim = ctk.StringVar(value="off")
