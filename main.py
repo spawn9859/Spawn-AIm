@@ -169,6 +169,7 @@ def combobox_fps_callback(choice):
     settings['max_fps'] = int(choice)
     with open(f"{script_directory}/configuration/config.json", 'w') as json_file:
         json.dump(settings, json_file, indent=4)
+    button_reload_event()
 
 def slider_mask_width_event(value):
     label_mask_width.configure(text=f"Mask width: {round(value)} px")
@@ -370,7 +371,7 @@ def button_reload_event():
         screen = bettercam.create(output_color="BGRA", max_buffer_len=512)
     else:
         screen.stop()
-    screen.start(region=(left, top, right, bottom), target_fps=settings['max_fps'], video_mode=True)
+    screen.start(region=(left, top, right, bottom), target_fps=int(settings['max_fps']), video_mode=True)
     load_model()
     if overlay is not None:
         toggle_overlay()
