@@ -1,2 +1,93 @@
 # Spawn-AIm
 An aimbot that uses AI models to detect and aim at targets. Uses YOLO models.
+# Spawn-Aim
+
+Spawn-Aim is an advanced aimbot tool designed to enhance your gaming experience by providing features such as auto-aim, trigger bot, recoil control, and more. This tool leverages YOLOv5 and YOLOv8 models for object detection and aims to provide a seamless and customizable experience.
+
+## Features
+
+- Auto-aim
+- Trigger bot
+- Recoil control
+- Aim shake
+- Overlay and preview
+- Customizable settings
+- Support for multiple YOLO versions and models
+- Xbox controller integration
+
+## Installation
+
+1. **Clone the repository:**
+    ```bash
+    git clone https://github.com/spawn9859/Spawn-Aim.git
+    cd Spawn-Aim
+    ```
+
+2. **Install the required dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+3. **Ensure the YOLOv5 repository is cloned and set up:**
+    ```bash
+    if [ ! -d "yolov5" ]; then
+        git clone https://github.com/ultralytics/yolov5
+        pip install -r yolov5/requirements.txt
+    fi
+    ```
+
+## Usage
+
+1. **Run the main script:**
+    ```bash
+    python main.py
+    ```
+
+2. **Configure settings:**
+    - Use the GUI to toggle features such as auto-aim, trigger bot, recoil control, and more.
+    - Adjust sensitivity, headshot offset, trigger bot distance, confidence, and other parameters using the sliders.
+    - Select the YOLO version, model, inference mode, and device from the dropdown menus.
+
+3. **Keybindings:**
+    - Configure activation and quit keys using the keybindings window.
+    - Use the Xbox controller's left trigger to toggle auto-aim if enabled.
+
+## Configuration
+
+The configuration files are located in the `configuration` directory:
+
+- `config.json`: Contains the default settings for the tool.
+- `key_mapping.json`: Maps key names to their corresponding key codes.
+
+## Contributing
+
+Contributions are welcome! Please follow these steps to contribute:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+    ```bash
+    git checkout -b feature-name
+    ```
+3. Commit your changes with a descriptive commit message.
+    ```bash
+    git commit -m "Add new feature"
+    ```
+4. Push your changes to your fork.
+    ```bash
+    git push origin feature-name
+    ```
+5. Create a pull request to the main repository.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgements
+
+- [Ultralytics YOLOv5](https://github.com/ultralytics/yolov5)
+- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)
+- [Pygame](https://www.pygame.org/)
+
+## Contact
+
+For any inquiries or support, please contact [spawn9859](https://github.com/spawn9859).
