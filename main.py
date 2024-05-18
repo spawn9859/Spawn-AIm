@@ -10,6 +10,7 @@ import numpy as np
 import bettercam
 import keyboard
 import pygame
+import threading
 import win32api
 import win32con
 import win32gui
