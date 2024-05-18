@@ -30,7 +30,7 @@ if not os.path.exists(f"{script_directory}/yolov5"):
     os.system(f"pip install -r {script_directory}/yolov5/requirements.txt")
 sys.path.append(f"{script_directory}/yolov5")
 
-from yolov5.utils.general import non_max_suppression
+from utils.general import non_max_suppression
 
 if torch.cuda.is_available():
     import cupy as cp
