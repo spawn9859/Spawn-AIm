@@ -1,4 +1,3 @@
-from rzctl import RZCONTROL, MOUSE_CLICK, KEYBOARD_INPUT_TYPE
 from colorama import Fore, Back, Style
 from ultralytics.utils import ops
 from PIL import Image, ImageTk
@@ -39,8 +38,8 @@ with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_fil
 with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
     settings = json.load(json_file)
 
-model, screen, overlay, canvas, random_x, random_y, rzctl, arduino = None, None, None, None, 0, 0, None, None
-models_path = os.path.join(os.getenv("APPDATA"), "ai-aimbot-launcher", "models")
+model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
+models_path = os.path.join(script_directory, "models")
 launcher_models = [os.path.splitext(file)[0] for file in [file for file in os.listdir(models_path) if file.endswith(".pt")]]
 
 targets = []
@@ -453,17 +452,12 @@ def extract_original_name(name):
 
 
 def mouse_click():
-    if settings['mouse_input'] == "razer":
-        rzctl.mouse_click(MOUSE_CLICK.LEFT_DOWN)
-        rzctl.mouse_click(MOUSE_CLICK.LEFT_UP)
     else:
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
 
 
 def mouse_move(move_x, move_y, click):
-    if settings['mouse_input'] == "razer":
-        rzctl.mouse_move(move_x, move_y, True)
     elif settings['mouse_input'] == "arduino":
         arduino.write("{}:{}:{}x".format(move_x, move_y, click).encode())
     else:
@@ -697,7 +691,7 @@ combobox_mouse_quit_bind.set("Select special")
 
 
 def main(**argv):
-    global model, screen, settings, overlay, canvas, rzctl
+    global model, screen, settings, overlay, canvas
 
     pr_purple('''
   ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
@@ -712,14 +706,10 @@ def main(**argv):
     print("https://github.com/spawn9859/Spawn-Aim")
     pr_yellow("\nMake sure your game is in the center of your screen!")
 
-    with open(os.path.join(os.getenv("APPDATA"), "ai-aimbot-launcher", "aimbotSettings", f"{argv['settingsProfile'].lower()}.json"), "r") as f:
+    with open(os.path.join(script_directory, "aimbotSettings", f"{argv['settingsProfile'].lower()}.json"), "r") as f:
         launcher_settings = json.load(f)
 
     mouse_inputs = ["default", "arduino"]
-    if os.path.exists(f"{script_directory}/rzctl_lib/rzctl.dll"):
-        rzctl = RZCONTROL(f"{script_directory}/rzctl_lib/rzctl.dll")
-        if rzctl.init():
-            mouse_inputs.append("razer")
 
     ports = []
     default_port = "COM1"
