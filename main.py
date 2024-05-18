@@ -2,6 +2,7 @@ from colorama import Fore, Back, Style
 from ultralytics.utils import ops
 from PIL import Image, ImageTk
 import serial.tools.list_ports
+import ctypes
 from ultralytics import YOLO
 import customtkinter as ctk
 import onnxruntime as ort
