@@ -706,7 +706,16 @@ combobox_mouse_activation_bind.set("Select special")
 combobox_mouse_quit_bind.set("Select special")
 
 
+def set_thread_name(thread, name):
+    try:
+        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread.ident), ctypes.py_object(SystemExit))
+    except (SystemExit, ValueError):
+        pass
+    thread.name = name
+
 def main(**argv):
+    main_thread = threading.current_thread()
+    set_thread_name(main_thread, "MainThread")
     global model, screen, settings, overlay, canvas
 
     pr_purple('''
@@ -859,6 +868,8 @@ def main(**argv):
     pressing = False
 
     while True:
+        if not main_thread.is_alive():
+            break
         pygame.event.pump()
         root.update()
         frame_count += 1
