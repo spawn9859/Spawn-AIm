@@ -165,9 +165,8 @@ def slider_max_move_event(value):
     settings['max_move'] = value
 
 
-def slider_fps_event(value):
-    label_fps.configure(text=f"FPS: {round(value)}")
-    settings['max_fps'] = round(value)
+def combobox_fps_callback(choice):
+    settings['max_fps'] = int(choice)
 
 def slider_mask_width_event(value):
     label_mask_width.configure(text=f"Mask width: {round(value)} px")
@@ -348,8 +347,7 @@ def button_reload_event():
     settings['height'], settings['width'] = map(int, combobox_yolo_model_size.get().split('x'))
     slider_mask_width.configure(to=settings['width'])
     slider_mask_height.configure(to=settings['height'])
-    slider_fps.configure(to=240)  # Assuming max FPS is 240
-    slider_fps.set(settings['max_fps'])
+    combobox_fps.set(str(settings['max_fps']))
     slider_mask_width.set(0)
     slider_mask_height.set(0)
     if settings['mask_width'] <= settings['width']:
@@ -583,11 +581,12 @@ label_max_move.place(x=10, y=400)
 slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_event)
 slider_max_move.place(x=10, y=425)
 
-label_fps = ctk.CTkLabel(root, text=f"FPS: {settings['max_fps']}")
+label_fps = ctk.CTkLabel(root, text="FPS:")
 label_fps.place(x=10, y=450)
 
-slider_fps = ctk.CTkSlider(root, from_=30, to=240, command=slider_fps_event)  # Assuming min FPS is 30 and max FPS is 240
-slider_fps.place(x=10, y=475)
+combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
+combobox_fps.place(x=10, y=475)
+combobox_fps.set(str(settings['max_fps']))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
 label_yolo_version.place(x=10, y=550)
@@ -814,8 +813,7 @@ def main(**argv):
     combobox_yolo_device.set(settings['yolo_device'])
     label_activation_key.configure(text=f"Activation key: {settings['activation_key_string']}")
     label_quit_key.configure(text=f"Quit key: {settings['quit_key_string']}")
-    label_fps.configure(text=f"FPS: {settings['max_fps']}")
-    slider_fps.set(settings['max_fps'])
+    combobox_fps.set(str(settings['max_fps']))
     combobox_mouse_input.configure(values=mouse_inputs)
     combobox_mouse_input.set(settings['mouse_input'])
     combobox_arduino.configure(values=ports)
