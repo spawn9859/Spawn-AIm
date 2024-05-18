@@ -25,6 +25,8 @@ import os
 import re
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
+if not os.path.exists(f"{script_directory}/yolov5"):
+    os.system(f"git clone https://github.com/ultralytics/yolov5 {script_directory}/yolov5")
 sys.path.append(f"{script_directory}/yolov5")
 
 from yolov5.utils.general import non_max_suppression
