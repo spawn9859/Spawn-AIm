@@ -38,11 +38,15 @@ if torch.cuda.is_available():
 with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_file:
     key_mapping = json.load(json_file)
 
+with open(f"{script_directory}/aimbotSettings/default.json", 'r') as json_file:
+    default_settings = json.load(json_file)
+
 with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
     settings = json.load(json_file)
 
-# Ensure 'max_fps' key exists in settings with a default value
-settings.setdefault('max_fps', 60)
+# Update settings with default values if not present
+for key, value in default_settings.items():
+    settings.setdefault(key, value)
 
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
 models_path = os.path.join(script_directory, "models")
