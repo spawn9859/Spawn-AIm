@@ -488,27 +488,27 @@ root.geometry("600x800+40+40")
 root.resizable(width=False, height=False)
 
 var_auto_aim = ctk.StringVar(value="off")
-checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=checkbox_auto_aim_event)
+checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=lambda: checkbox_auto_aim_event(var_auto_aim, settings))
 checkbox_auto_aim.place(x=10, y=10)
 
 var_trigger_bot = ctk.StringVar(value="off")
-checkbox_trigger_bot = ctk.CTkCheckBox(root, text="Trigger bot", variable=var_trigger_bot, onvalue="on", offvalue="off", command=checkbox_trigger_bot_event)
+checkbox_trigger_bot = ctk.CTkCheckBox(root, text="Trigger bot", variable=var_trigger_bot, onvalue="on", offvalue="off", command=lambda: checkbox_trigger_bot_event(var_trigger_bot, settings))
 checkbox_trigger_bot.place(x=10, y=40)
 
 var_toggle = ctk.StringVar(value="off")
-checkbox_toggle = ctk.CTkCheckBox(root, text="Auto aim toggle", variable=var_toggle, onvalue="on", offvalue="off", command=checkbox_toggle_event)
+checkbox_toggle = ctk.CTkCheckBox(root, text="Auto aim toggle", variable=var_toggle, onvalue="on", offvalue="off", command=lambda: checkbox_toggle_event(var_toggle, settings))
 checkbox_toggle.place(x=110, y=10)
 
 var_recoil = ctk.StringVar(value="off")
-checkbox_recoil = ctk.CTkCheckBox(root, text="Recoil control", variable=var_recoil, onvalue="on", offvalue="off", command=checkbox_recoil_event)
+checkbox_recoil = ctk.CTkCheckBox(root, text="Recoil control", variable=var_recoil, onvalue="on", offvalue="off", command=lambda: checkbox_recoil_event(var_recoil, settings))
 checkbox_recoil.place(x=110, y=40)
 
 var_aim_shake = ctk.StringVar(value="off")
-checkbox_aim_shake = ctk.CTkCheckBox(root, text="Aim shake", variable=var_aim_shake, onvalue="on", offvalue="off", command=checkbox_aim_shake_event)
+checkbox_aim_shake = ctk.CTkCheckBox(root, text="Aim shake", variable=var_aim_shake, onvalue="on", offvalue="off", command=lambda: checkbox_aim_shake_event(var_aim_shake, settings))
 checkbox_aim_shake.place(x=10, y=70)
 
 var_overlay = ctk.StringVar(value="off")
-checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=checkbox_overlay_event)
+checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=lambda: checkbox_overlay_event(var_overlay, settings, toggle_overlay))
 checkbox_overlay.place(x=110, y=70)
 
 label_sensitivity = ctk.CTkLabel(root, text="Sensitivity: 0%")
@@ -603,7 +603,7 @@ label_quit_key = ctk.CTkLabel(root, text=f"Quit key: None")
 label_quit_key.place(x=10, y=485)
 
 var_preview = ctk.StringVar(value="off")
-checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=checkbox_preview_event)
+checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=lambda: checkbox_preview_event(var_preview, settings, image_label_preview, image_preview))
 checkbox_preview.place(x=320, y=10)
 
 label_fps = ctk.CTkLabel(root, text="Fps:")
@@ -614,11 +614,11 @@ image_label_preview = ctk.CTkLabel(root, image=image_preview, text="")
 image_label_preview.place(x=240, y=40)
 
 var_mask_left = ctk.StringVar(value="off")
-checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=checkbox_mask_left_event)
+checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=lambda: checkbox_mask_left_event(var_mask_left, settings))
 checkbox_mask_left.place(x=240, y=290)
 
 var_mask_right = ctk.StringVar(value="off")
-checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=checkbox_mask_right_event)
+checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=lambda: checkbox_mask_right_event(var_mask_right, settings))
 checkbox_mask_right.place(x=380, y=290)
 
 label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
