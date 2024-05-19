@@ -1,6 +1,7 @@
 import math
 import win32api
 import win32con
+from main import get_left_trigger
 
 def send_targets(controller, settings, targets, distances, random_x, random_y):
     def mouse_click():
