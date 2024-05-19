@@ -68,6 +68,17 @@ def get_left_trigger():
 
     
 from Main.utils import print_colored, pr_blue, pr_green
+from Main.events import (
+    checkbox_auto_aim_event,
+    checkbox_trigger_bot_event,
+    checkbox_toggle_event,
+    checkbox_recoil_event,
+    checkbox_aim_shake_event,
+    checkbox_overlay_event,
+    checkbox_preview_event,
+    checkbox_mask_left_event,
+    checkbox_mask_right_event
+)
 
 
 def checkbox_auto_aim_event():
