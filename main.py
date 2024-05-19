@@ -746,15 +746,16 @@ def main(**argv):
 
             if settings['yolo_mode'] == "pytorch" or settings['yolo_mode'] == "tensorrt":
                 if settings['yolo_version'] == "v5":
-                    model.conf = settings['confidence'] / 100
-                    model.iou = settings['confidence'] / 100
-                    results = model(frame, size=[settings['height'], settings['width']])
-                    if len(results.xyxy[0]) != 0:
-                        for box in results.xyxy[0]:
-                            box_result = calculate_targets(box[0], box[1], box[2], box[3])
-                            coordinates.append((box[0], box[1], box[2], box[3]))
-                            targets.append(box_result[0])
-                            distances.append(box_result[1])
+                    if model is not None:
+                        model.conf = settings['confidence'] / 100
+                        model.iou = settings['confidence'] / 100
+                        results = model(frame, size=[settings['height'], settings['width']])
+                        if len(results.xyxy[0]) != 0:
+                            for box in results.xyxy[0]:
+                                box_result = calculate_targets(box[0], box[1], box[2], box[3])
+                                coordinates.append((box[0], box[1], box[2], box[3]))
+                                targets.append(box_result[0])
+                                distances.append(box_result[1])
 
                 elif settings['yolo_version'] == "v8":
                     results = model.predict(frame, verbose=False, conf=settings['confidence'] / 100, iou=settings['confidence'] / 100, half=False, imgsz=[settings['height'], settings['width']])

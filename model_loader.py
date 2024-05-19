@@ -65,4 +65,6 @@ def load_model(settings, models_path, script_directory):
         so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
         model = ort.InferenceSession(f"{models_path}/{get_model_name(settings)}", sess_options=so, providers=[onnx_provider])
 
+    if model is None:
+        raise ValueError(f"Failed to load model: {get_model_name(settings)}")
     pr_green("Model loaded.")
