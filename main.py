@@ -37,12 +37,16 @@ from utils.general import non_max_suppression
 if torch.cuda.is_available():
     import cupy as cp
 
-with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_file:
-    key_mapping = json.load(json_file)
+def load_configuration(script_directory):
+    with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_file:
+        key_mapping = json.load(json_file)
 
-with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
-    settings = json.load(json_file)
+    with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
+        settings = json.load(json_file)
+    
+    return key_mapping, settings
 
+key_mapping, settings = load_configuration(script_directory)
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
 models_path = os.path.join(script_directory, "models")
 launcher_models = [os.path.splitext(file)[0] for file in [file for file in os.listdir(models_path) if file.endswith(".pt")]]
