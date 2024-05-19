@@ -754,6 +754,7 @@ def main(**argv):
                         model.conf = settings['confidence'] / 100
                         model.iou = settings['confidence'] / 100
                         results = model(frame, size=[settings['height'], settings['width']])
+                        pr_blue(f"Results: {results.xyxy[0]}")
                         if len(results.xyxy[0]) != 0:
                             for box in results.xyxy[0]:
                                 box_result = calculate_targets(box[0], box[1], box[2], box[3])
@@ -764,6 +765,7 @@ def main(**argv):
                 elif settings['yolo_version'] == "v8":
                     results = model.predict(frame, verbose=False, conf=settings['confidence'] / 100, iou=settings['confidence'] / 100, half=False, imgsz=[settings['height'], settings['width']])
                     for result in results:
+                        pr_blue(f"Result: {result.boxes.xyxy}")
                         if len(result.boxes.xyxy) != 0:
                             for box in result.boxes.xyxy:
                                 box_result = calculate_targets(box[0], box[1], box[2], box[3])
@@ -798,6 +800,7 @@ def main(**argv):
                 elif settings['yolo_version'] == "v8":
                     predictions = ops.non_max_suppression(frame, settings['confidence'] / 100, settings['confidence'] / 100, 0, False, max_det=4)
 
+                pr_blue(f"Predictions: {predictions}")
                 for i, det in enumerate(predictions):
                     if len(det):
                         for *xyxy, conf, cls in reversed(det):
