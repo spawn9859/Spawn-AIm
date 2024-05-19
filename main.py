@@ -335,7 +335,11 @@ def button_reload_event():
     else:
         screen.stop()
     screen.start(region=(left, top, right, bottom), target_fps=int(settings['max_fps']), video_mode=True)
-    load_model(settings, models_path, script_directory)
+    model = load_model(settings, models_path, script_directory)
+    if model is None:
+        pr_red("Model failed to load.")
+    else:
+        pr_green("Model loaded successfully in main.")
     if overlay is not None:
         toggle_overlay()
         toggle_overlay()
