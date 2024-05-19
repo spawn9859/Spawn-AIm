@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk
-from event_handlers import checkbox_auto_aim_event, checkbox_trigger_bot_event, checkbox_toggle_event, checkbox_recoil_event, checkbox_aim_shake_event, checkbox_overlay_event, checkbox_preview_event, checkbox_mask_left_event, checkbox_mask_right_event, slider_sensitivity_event, slider_headshot_event, slider_trigger_bot_event, slider_confidence_event, slider_recoil_strength_event, slider_aim_shake_strength_event, slider_max_move_event
+from event_handlers import checkbox_auto_aim_event, checkbox_trigger_bot_event, checkbox_toggle_event, checkbox_recoil_event, checkbox_aim_shake_event, checkbox_overlay_event, checkbox_preview_event, checkbox_mask_left_event, checkbox_mask_right_event, slider_sensitivity_event, slider_headshot_event, slider_trigger_bot_event, slider_confidence_event, slider_recoil_strength_event, slider_aim_shake_strength_event, slider_max_move_event, combobox_fps_callback, slider_mask_width_event, slider_mask_height_event, combobox_yolo_version_callback, combobox_yolo_model_callback, combobox_yolo_model_size_callback, combobox_yolo_mode_callback, combobox_yolo_device_callback, combobox_mouse_input_callback, combobox_arduino_callback, combobox_mouse_activation_bind_callback, combobox_mouse_quit_bind_callback, button_activation_bind_event, button_quit_bind_event, button_keybindings_event, button_reload_event
 import os
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))

@@ -55,3 +55,4 @@ def slider_aim_shake_strength_event(value):
 def slider_max_move_event(value):
     label_max_move.configure(text=f"Max move speed: {round(value)} px")
     settings['max_move'] = value
+from event_handlers import combobox_fps_callback, slider_mask_width_event, slider_mask_height_event, combobox_yolo_version_callback, combobox_yolo_model_callback, combobox_yolo_model_size_callback, combobox_yolo_mode_callback, combobox_yolo_device_callback, combobox_mouse_input_callback, combobox_arduino_callback, combobox_mouse_activation_bind_callback, combobox_mouse_quit_bind_callback, button_activation_bind_event, button_quit_bind_event, button_keybindings_event, button_reload_event
