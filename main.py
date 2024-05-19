@@ -55,18 +55,16 @@ targets = []
 distances = []
 coordinates = []
 
-# Initialize Pygame
-pygame.init()
-
-# Initialize the joystick module
-pygame.joystick.init()
-
-# Attempt to setup the Xbox controller
-try:
-    controller = pygame.joystick.Joystick(0)  # Assumes the controller is the first joystick
-    controller.init()
-except pygame.error:
-    print("Unable to initialize the Xbox Controller")
+def initialize_pygame_and_controller():
+    pygame.init()
+    pygame.joystick.init()
+    try:
+        controller = pygame.joystick.Joystick(0)  # Assumes the controller is the first joystick
+        controller.init()
+        return controller
+    except pygame.error:
+        print("Unable to initialize the Xbox Controller")
+        return None
     
 # Define a function to get the left trigger value
 def get_left_trigger():
@@ -743,12 +741,7 @@ def main(**argv):
             default_port = port[0]
         ports.append(port[0])
         
-    # Attempt to setup the Xbox controller
-    try:
-        controller = pygame.joystick.Joystick(0)  # Assumes the controller is the first joystick
-        controller.init()
-    except pygame.error:
-        print("Unable to initialize the Xbox Controller")
+    controller = initialize_pygame_and_controller()
 
     activation_key = key_mapping.get(launcher_settings['activationKey'])
     quit_key = key_mapping.get(launcher_settings['quitKey'])
