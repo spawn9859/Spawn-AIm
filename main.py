@@ -67,28 +67,9 @@ def get_left_trigger():
     return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
 
     
-def pr_red(skk): print(Fore.RED + skk, Style.RESET_ALL)
-
-
-def pr_green(skk): print(Fore.GREEN + skk + Style.RESET_ALL)
-
-
-def pr_yellow(skk): print(Fore.YELLOW + skk + Style.RESET_ALL)
-
-
-def pr_blue(skk): print(Fore.BLUE + skk + Style.RESET_ALL)
-
-
-def pr_purple(skk): print(Fore.MAGENTA + skk + Style.RESET_ALL)
-
-
-def pr_cyan(skk): print(Fore.CYAN + skk + Style.RESET_ALL)
-
-
-def pr_light_gray(skk): print(Fore.WHITE + skk + Style.RESET_ALL)
-
-
-def pr_black(skk): print(Fore.BLACK + skk + Style.RESET_ALL)
+def print_colored(text, color):
+    color_code = getattr(Fore, color.upper())
+    print(color_code + text, Style.RESET_ALL)
 
 
 def checkbox_auto_aim_event():
@@ -711,7 +692,7 @@ combobox_mouse_quit_bind.set("Select special")
 def main(**argv):
     global model, screen, settings, overlay, canvas
 
-    pr_purple('''
+    print_colored('''
   ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
 ▒██    ▒ ▓██░  ██ ▒████▄   ▓█░ █ ░█░ ██ ▀█   █     ▒████▄   ▒▓██▒▓██▒▀█▀ ██▒▓█████▄ ▒██▒  ██▒▓  ██▒ ▓▒
 ░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄ ▒█░ █ ░█ ▓██  ▀█ ██▒    ▒██  ▀█▄ ▒▒██▒▓██    ▓██░▒██▒ ▄██▒██░  ██▒▒ ▓██░ ▒░
@@ -720,9 +701,9 @@ def main(**argv):
 ▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ▒▒   ▓▒█ ░▓  ░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
 ░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░   ▒▒ ░ ▒ ░░  ░      ░▒░▒   ░   ░ ▒ ▒░     ░    
 ░  ░  ░  ░░         ░   ▒    ░   ░     ░   ░ ░       ░   ▒  ░ ▒ ░░      ░    ░    ░ ░ ░ ░ ▒    ░      
-      ░                 ░      ░             ░           ░    ░         ░    ░          ░ ░''')
+      ░                 ░      ░             ░           ░    ░         ░    ░          ░ ░''', "purple")
     print("https://github.com/spawn9859/Spawn-Aim")
-    pr_yellow("\nMake sure your game is in the center of your screen!")
+    print_colored("\nMake sure your game is in the center of your screen!", "yellow")
 
     with open(os.path.join(script_directory, "aimbotSettings", f"{argv['settingsProfile'].lower()}.json"), "r") as f:
         launcher_settings = json.load(f)
