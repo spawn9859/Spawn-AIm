@@ -38,24 +38,8 @@ if torch.cuda.is_available():
 with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_file:
     key_mapping = json.load(json_file)
 
-with open(f"{script_directory}/aimbotSettings/default.json", 'r') as json_file:
-    default_settings = json.load(json_file)
-
 with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
     settings = json.load(json_file)
-
-# Update settings with default values if not present
-for key, value in default_settings.items():
-    settings.setdefault(key, value)
-
-# Ensure activation_key_string and quit_key_string are present
-if 'activation_key_string' not in settings:
-    settings['activation_key_string'] = default_settings.get('activation_key_string', 'Alt')
-if 'quit_key_string' not in settings:
-    settings['quit_key_string'] = default_settings.get('quit_key_string', 'Q')
-
-# Debugging: Print settings to verify
-print("Settings after loading defaults:", settings)
 
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
 models_path = os.path.join(script_directory, "models")
@@ -83,43 +67,102 @@ def get_left_trigger():
     return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
 
     
-from Main.shared import (
-    label_sensitivity,
-    label_headshot,
-    label_trigger_bot,
-    label_confidence,
-    label_recoil_strength,
-    label_aim_shake_strength,
-    label_max_move,
-    label_mask_width,
-    label_mask_height,
-    settings,
-    label_activation_bind,
-    label_quit_bind,
-    label_activation_key,
-    label_quit_key,
-    image_label_preview
-)
-from Main.events import (
-    checkbox_auto_aim_event,
-    checkbox_trigger_bot_event,
-    checkbox_toggle_event,
-    checkbox_recoil_event,
-    checkbox_aim_shake_event,
-    checkbox_overlay_event,
-    checkbox_preview_event,
-    checkbox_mask_left_event,
-    checkbox_mask_right_event,
-    slider_sensitivity_event,
-    slider_headshot_event,
-    slider_trigger_bot_event,
-    slider_confidence_event,
-    slider_recoil_strength_event,
-    slider_aim_shake_strength_event,
-    slider_max_move_event,
-    slider_mask_width_event,
-    slider_mask_height_event
-)
+def pr_red(skk): print(Fore.RED + skk, Style.RESET_ALL)
+
+
+def pr_green(skk): print(Fore.GREEN + skk + Style.RESET_ALL)
+
+
+def pr_yellow(skk): print(Fore.YELLOW + skk + Style.RESET_ALL)
+
+
+def pr_blue(skk): print(Fore.BLUE + skk + Style.RESET_ALL)
+
+
+def pr_purple(skk): print(Fore.MAGENTA + skk + Style.RESET_ALL)
+
+
+def pr_cyan(skk): print(Fore.CYAN + skk + Style.RESET_ALL)
+
+
+def pr_light_gray(skk): print(Fore.WHITE + skk + Style.RESET_ALL)
+
+
+def pr_black(skk): print(Fore.BLACK + skk + Style.RESET_ALL)
+
+
+def checkbox_auto_aim_event():
+    settings['auto_aim'] = var_auto_aim.get()
+
+
+def checkbox_trigger_bot_event():
+    settings['trigger_bot'] = var_trigger_bot.get()
+
+
+def checkbox_toggle_event():
+    settings['toggle'] = var_toggle.get()
+
+
+def checkbox_recoil_event():
+    settings['recoil'] = var_recoil.get()
+
+
+def checkbox_aim_shake_event():
+    settings['aim_shake'] = var_aim_shake.get()
+
+
+def checkbox_overlay_event():
+    toggle_overlay()
+    settings['overlay'] = var_overlay.get()
+
+
+def checkbox_preview_event():
+    settings['preview'] = var_preview.get()
+    if settings['preview'] == "off":
+        image_label_preview.configure(image=image_preview)
+
+
+def checkbox_mask_left_event():
+    settings['mask_left'] = var_mask_left.get()
+
+
+def checkbox_mask_right_event():
+    settings['mask_right'] = var_mask_right.get()
+
+
+def slider_sensitivity_event(value):
+    label_sensitivity.configure(text=f"Sensitivity: {round(value)}%")
+    settings['sensitivity'] = value
+
+
+def slider_headshot_event(value):
+    label_headshot.configure(text=f"Headshot offset: {round(value)}%")
+    settings['headshot'] = value
+
+
+def slider_trigger_bot_event(value):
+    label_trigger_bot.configure(text=f"Trigger bot distance: {round(value)} px")
+    settings['trigger_bot_distance'] = value
+
+
+def slider_confidence_event(value):
+    label_confidence.configure(text=f"Confidence: {round(value)}%")
+    settings['confidence'] = value
+
+
+def slider_recoil_strength_event(value):
+    label_recoil_strength.configure(text=f"Recoil control strength: {round(value)}%")
+    settings['recoil_strength'] = value
+
+
+def slider_aim_shake_strength_event(value):
+    label_aim_shake_strength.configure(text=f"Aim shake strength: {round(value)}%")
+    settings['aim_shake_strength'] = value
+
+
+def slider_max_move_event(value):
+    label_max_move.configure(text=f"Max move speed: {round(value)} px")
+    settings['max_move'] = value
 
 
 def combobox_fps_callback(choice):
@@ -127,6 +170,15 @@ def combobox_fps_callback(choice):
     with open(f"{script_directory}/configuration/config.json", 'w') as json_file:
         json.dump(settings, json_file, indent=4)
     button_reload_event()
+
+def slider_mask_width_event(value):
+    label_mask_width.configure(text=f"Mask width: {round(value)} px")
+    settings['mask_width'] = value
+
+
+def slider_mask_height_event(value):
+    label_mask_height.configure(text=f"Mask height: {round(value)} px")
+    settings['mask_height'] = value
 
 
 def combobox_yolo_version_callback(choice):
@@ -467,27 +519,27 @@ root.geometry("600x800+40+40")
 root.resizable(width=False, height=False)
 
 var_auto_aim = ctk.StringVar(value="off")
-checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=lambda: checkbox_auto_aim_event(var_auto_aim, settings))
+checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=checkbox_auto_aim_event)
 checkbox_auto_aim.place(x=10, y=10)
 
 var_trigger_bot = ctk.StringVar(value="off")
-checkbox_trigger_bot = ctk.CTkCheckBox(root, text="Trigger bot", variable=var_trigger_bot, onvalue="on", offvalue="off", command=lambda: checkbox_trigger_bot_event(var_trigger_bot, settings))
+checkbox_trigger_bot = ctk.CTkCheckBox(root, text="Trigger bot", variable=var_trigger_bot, onvalue="on", offvalue="off", command=checkbox_trigger_bot_event)
 checkbox_trigger_bot.place(x=10, y=40)
 
 var_toggle = ctk.StringVar(value="off")
-checkbox_toggle = ctk.CTkCheckBox(root, text="Auto aim toggle", variable=var_toggle, onvalue="on", offvalue="off", command=lambda: checkbox_toggle_event(var_toggle, settings))
+checkbox_toggle = ctk.CTkCheckBox(root, text="Auto aim toggle", variable=var_toggle, onvalue="on", offvalue="off", command=checkbox_toggle_event)
 checkbox_toggle.place(x=110, y=10)
 
 var_recoil = ctk.StringVar(value="off")
-checkbox_recoil = ctk.CTkCheckBox(root, text="Recoil control", variable=var_recoil, onvalue="on", offvalue="off", command=lambda: checkbox_recoil_event(var_recoil, settings))
+checkbox_recoil = ctk.CTkCheckBox(root, text="Recoil control", variable=var_recoil, onvalue="on", offvalue="off", command=checkbox_recoil_event)
 checkbox_recoil.place(x=110, y=40)
 
 var_aim_shake = ctk.StringVar(value="off")
-checkbox_aim_shake = ctk.CTkCheckBox(root, text="Aim shake", variable=var_aim_shake, onvalue="on", offvalue="off", command=lambda: checkbox_aim_shake_event(var_aim_shake, settings))
+checkbox_aim_shake = ctk.CTkCheckBox(root, text="Aim shake", variable=var_aim_shake, onvalue="on", offvalue="off", command=checkbox_aim_shake_event)
 checkbox_aim_shake.place(x=10, y=70)
 
 var_overlay = ctk.StringVar(value="off")
-checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=lambda: checkbox_overlay_event(var_overlay, settings, toggle_overlay))
+checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=checkbox_overlay_event)
 checkbox_overlay.place(x=110, y=70)
 
 label_sensitivity = ctk.CTkLabel(root, text="Sensitivity: 0%")
@@ -537,7 +589,7 @@ label_fps.place(x=10, y=670)
 
 combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
 combobox_fps.place(x=10, y=700)
-combobox_fps.set(str(settings.get('max_fps', 180)))
+combobox_fps.set(str(settings['max_fps']))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
 label_yolo_version.place(x=10, y=550)
@@ -582,20 +634,22 @@ label_quit_key = ctk.CTkLabel(root, text=f"Quit key: None")
 label_quit_key.place(x=10, y=485)
 
 var_preview = ctk.StringVar(value="off")
-checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=lambda: checkbox_preview_event(var_preview, settings, image_label_preview, image_preview))
+checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=checkbox_preview_event)
 checkbox_preview.place(x=320, y=10)
 
 label_fps = ctk.CTkLabel(root, text="Fps:")
 label_fps.place(x=240, y=10)
 
+image_preview = ctk.CTkImage(size=(240, 240), dark_image=Image.open(f"{script_directory}/preview.png"), light_image=Image.open(f"{script_directory}/preview.png"))
+image_label_preview = ctk.CTkLabel(root, image=image_preview, text="")
 image_label_preview.place(x=240, y=40)
 
 var_mask_left = ctk.StringVar(value="off")
-checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=lambda: checkbox_mask_left_event(var_mask_left, settings))
+checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=checkbox_mask_left_event)
 checkbox_mask_left.place(x=240, y=290)
 
 var_mask_right = ctk.StringVar(value="off")
-checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=lambda: checkbox_mask_right_event(var_mask_right, settings))
+checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=checkbox_mask_right_event)
 checkbox_mask_right.place(x=380, y=290)
 
 label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
@@ -657,7 +711,7 @@ combobox_mouse_quit_bind.set("Select special")
 def main(**argv):
     global model, screen, settings, overlay, canvas
 
-    print_colored('''
+    pr_purple('''
   ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
 ▒██    ▒ ▓██░  ██ ▒████▄   ▓█░ █ ░█░ ██ ▀█   █     ▒████▄   ▒▓██▒▓██▒▀█▀ ██▒▓█████▄ ▒██▒  ██▒▓  ██▒ ▓▒
 ░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄ ▒█░ █ ░█ ▓██  ▀█ ██▒    ▒██  ▀█▄ ▒▒██▒▓██    ▓██░▒██▒ ▄██▒██░  ██▒▒ ▓██░ ▒░
@@ -666,9 +720,9 @@ def main(**argv):
 ▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ▒▒   ▓▒█ ░▓  ░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
 ░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░   ▒▒ ░ ▒ ░░  ░      ░▒░▒   ░   ░ ▒ ▒░     ░    
 ░  ░  ░  ░░         ░   ▒    ░   ░     ░   ░ ░       ░   ▒  ░ ▒ ░░      ░    ░    ░ ░ ░ ░ ▒    ░      
-      ░                 ░      ░             ░           ░    ░         ░    ░          ░ ░''', "purple")
+      ░                 ░      ░             ░           ░    ░         ░    ░          ░ ░''')
     print("https://github.com/spawn9859/Spawn-Aim")
-    print_colored("\nMake sure your game is in the center of your screen!", "yellow")
+    pr_yellow("\nMake sure your game is in the center of your screen!")
 
     with open(os.path.join(script_directory, "aimbotSettings", f"{argv['settingsProfile'].lower()}.json"), "r") as f:
         launcher_settings = json.load(f)
