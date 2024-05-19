@@ -489,31 +489,7 @@ def calculate_targets(x1, y1, x2, y2):
     return (x, y), distance
 
 
-def send_targets(controller):
-    global random_x, random_y
-
-    if not distances:
-        return
-
-    trigger_distance = round(settings['trigger_bot_distance'])
-    sensitivity_factor = settings['sensitivity'] / 20
-    click = 0
-
-    target_x, target_y = targets[distances.index(min(distances))]
-    target_x = min(max(target_x, -settings['max_move']), settings['max_move'])
-    target_y = min(max(target_y, -settings['max_move']), settings['max_move'])
-
-    trigger_pressed = get_left_trigger(controller) > 0.5  # Assuming half-press as activation threshold
-
-    if settings['auto_aim'] == "on" and (trigger_pressed and settings['toggle'] == "off" or settings['toggle'] == "on"):
-        recoil = int(settings['recoil_strength']) if settings['recoil'] == "on" and trigger_pressed else 0
-        mouse_move_x = int((target_x + random_x) * sensitivity_factor)
-        mouse_move_y = int((target_y + random_y + recoil) * sensitivity_factor)
-
-        if settings['trigger_bot'] == "on" and target_x <= trigger_distance and target_y <= trigger_distance and target_x >= -trigger_distance and target_y >= -trigger_distance:
-            click = 1
-
-        mouse_move(mouse_move_x, mouse_move_y, click)
+from send_targets import send_targets
 
 
 
@@ -930,7 +906,7 @@ def main(**argv):
                                 targets.append(box_result[0])
                                 distances.append(box_result[1])
 
-            send_targets(controller)
+            send_targets(controller, settings, targets, distances, random_x, random_y)
 
         if settings['preview'] == "on":
             update_preview(np_frame)
