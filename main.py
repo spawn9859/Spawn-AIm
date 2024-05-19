@@ -67,7 +67,7 @@ def initialize_pygame_and_controller():
         return None
     
 # Define a function to get the left trigger value
-def get_left_trigger():
+def get_left_trigger(controller):
     return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
 
     
@@ -489,7 +489,7 @@ def calculate_targets(x1, y1, x2, y2):
     return (x, y), distance
 
 
-def send_targets():
+def send_targets(controller):
     global random_x, random_y
 
     if not distances:
@@ -503,7 +503,7 @@ def send_targets():
     target_x = min(max(target_x, -settings['max_move']), settings['max_move'])
     target_y = min(max(target_y, -settings['max_move']), settings['max_move'])
 
-    trigger_pressed = get_left_trigger() > 0.5  # Assuming half-press as activation threshold
+    trigger_pressed = get_left_trigger(controller) > 0.5  # Assuming half-press as activation threshold
 
     if settings['auto_aim'] == "on" and (trigger_pressed and settings['toggle'] == "off" or settings['toggle'] == "on"):
         recoil = int(settings['recoil_strength']) if settings['recoil'] == "on" and trigger_pressed else 0
@@ -930,7 +930,7 @@ def main(**argv):
                                 targets.append(box_result[0])
                                 distances.append(box_result[1])
 
-            send_targets()
+            send_targets(controller)
 
         if settings['preview'] == "on":
             update_preview(np_frame)
