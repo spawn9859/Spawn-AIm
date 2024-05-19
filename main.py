@@ -48,6 +48,9 @@ with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
 for key, value in default_settings.items():
     settings.setdefault(key, value)
 
+# Debugging: Print settings to verify
+print("Settings after loading defaults:", settings)
+
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
 models_path = os.path.join(script_directory, "models")
 launcher_models = [os.path.splitext(file)[0] for file in [file for file in os.listdir(models_path) if file.endswith(".pt")]]
