@@ -2,7 +2,6 @@ from colorama import Fore, Back, Style
 from ultralytics.utils import ops
 from PIL import Image, ImageTk
 import serial.tools.list_ports
-import ctypes
 from ultralytics import YOLO
 import customtkinter as ctk
 import onnxruntime as ort
@@ -10,7 +9,6 @@ import numpy as np
 import bettercam
 import keyboard
 import pygame
-import threading
 import win32api
 import win32con
 import win32gui
@@ -25,8 +23,6 @@ import cv2
 import sys
 import os
 import re
-import ctypes
-import threading
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
 if not os.path.exists(f"{script_directory}/yolov5"):
@@ -384,9 +380,9 @@ def button_reload_event():
 
 def get_mode():
     if settings['yolo_mode'] == "pytorch":
-        return "pt"
+        return "engine"
     elif settings['yolo_mode'] == "onnx":
-        return "onnx"
+        return "engine"
     elif settings['yolo_mode'] == "tensorrt":
         return "engine"
     return None
@@ -712,17 +708,7 @@ combobox_mouse_quit_bind.set("Select special")
 
 
 
-def set_thread_name(thread, name):
-    try:
-        ctypes.pythonapi.PyThreadState_SetAsyncExc(ctypes.c_long(thread.ident), ctypes.py_object(SystemExit))
-    except (SystemExit, ValueError):
-        pass
-    thread.name = name
-
-
 def main(**argv):
-    main_thread = threading.current_thread()
-    set_thread_name(main_thread, "MainThread")
     global model, screen, settings, overlay, canvas
 
     pr_purple('''
@@ -788,7 +774,7 @@ def main(**argv):
     settings['mask_height'] = launcher_settings['maskHeight']
     settings['yolo_version'] = f"v{argv['yoloVersion']}"
     settings['yolo_model'] = "v5_Fortnite_taipeiuser"
-    settings['yolo_mode'] = {0: "pytorch", 1: "onnx", 2: "tensorrt"}.get(argv['version'])
+    settings['yolo_mode'] = "tensorrt"
     settings['yolo_device'] = {1: "cpu", 2: "amd", 3: "nvidia"}.get(launcher_settings['onnxChoice'])
     settings['activation_key'] = activation_key
     settings['quit_key'] = quit_key
@@ -875,8 +861,6 @@ def main(**argv):
     pressing = False
 
     while True:
-        if not main_thread.is_alive():
-            break
         root.update()
         frame_count += 1
         np_frame = np.array(screen.get_latest_frame())
