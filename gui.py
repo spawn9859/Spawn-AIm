@@ -35,6 +35,10 @@ def create_gui(settings, key_mapping, launcher_models):
     checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=checkbox_overlay_event)
     checkbox_overlay.place(x=110, y=70)
 
+    var_preview = ctk.StringVar(value="off")
+    checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=checkbox_preview_event)
+    checkbox_preview.place(x=320, y=10)
+
     label_sensitivity = ctk.CTkLabel(root, text="Sensitivity: 0%")
     label_sensitivity.place(x=10, y=100)
 
