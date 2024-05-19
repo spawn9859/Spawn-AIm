@@ -1,28 +1,30 @@
-from colorama import Fore, Back, Style
-from ultralytics.utils import ops
-from PIL import Image, ImageTk
-import serial.tools.list_ports
-from ultralytics import YOLO
-import customtkinter as ctk
-import onnxruntime as ort
-import numpy as np
-import bettercam
-import keyboard
-import pygame
-import win32api
-import win32con
-import win32gui
-import shutil
-import random
-import serial
-import torch
+import os
+import sys
 import json
 import time
 import math
-import cv2
-import sys
-import os
+import random
+import shutil
 import re
+
+import torch
+import numpy as np
+import cv2
+import pygame
+import serial
+import keyboard
+import onnxruntime as ort
+import serial.tools.list_ports
+from PIL import Image, ImageTk
+from colorama import Fore, Back, Style
+import customtkinter as ctk
+import win32api
+import win32con
+import win32gui
+
+from ultralytics import YOLO
+from ultralytics.utils import ops
+import bettercam
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
 if not os.path.exists(f"{script_directory}/yolov5"):
