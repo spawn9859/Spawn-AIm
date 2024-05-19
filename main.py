@@ -362,70 +362,7 @@ def button_reload_event():
         toggle_overlay()
 
 
-def get_mode():
-    if settings['yolo_mode'] == "pytorch":
-        return "engine"
-    elif settings['yolo_mode'] == "onnx":
-        return "engine"
-    elif settings['yolo_mode'] == "tensorrt":
-        return "engine"
-    return None
-
-
-def get_model_name():
-    if settings['yolo_mode'] == "pytorch":
-        return f"{settings['yolo_model']}.pt"
-    else:
-        return f"{settings['yolo_model']}{settings['yolo_version']}{settings['height']}{settings['width']}Half.{get_mode()}"
-
-
-def model_existence_check():
-    if not settings['yolo_mode'] == "pytorch":
-        if not os.path.exists(f"{models_path}/{get_model_name()}"):
-            pr_cyan(f"Exporting {settings['yolo_model']}.pt to {get_model_name()} with yolo{settings['yolo_version']}.")
-            export_model()
-
-
-def load_model():
-    global model
-    model_existence_check()
-    pr_blue(f"Loading {get_model_name()} with yolo{settings['yolo_version']} for {settings['yolo_mode']} inference.")
-
-    if not settings['yolo_mode'] == "onnx":
-        if settings['yolo_version'] == "v8":
-            model = YOLO(f"{models_path}/{get_model_name()}", task="detect")
-        elif settings['yolo_version'] == "v5":
-            model = torch.hub.load('ultralytics/yolov5', 'custom', path=f"{models_path}/{get_model_name()}", verbose=False, trust_repo=True, force_reload=True)
-    else:
-        onnx_provider = ""
-        if settings['yolo_device'] == "cpu":
-            onnx_provider = "CPUExecutionProvider"
-        elif settings['yolo_device'] == "amd":
-            onnx_provider = "DmlExecutionProvider"
-        elif settings['yolo_device'] == "nvidia":
-            onnx_provider = "CUDAExecutionProvider"
-
-        so = ort.SessionOptions()
-        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
-        model = ort.InferenceSession(f"{models_path}/{get_model_name()}", sess_options=so, providers=[onnx_provider])
-
-    pr_green("Model loaded.")
-
-
-def export_model():
-    shutil.copy(f"{models_path}/{settings['yolo_model']}.pt", f"{script_directory}/temp.pt")
-    if settings['yolo_version'] == "v8":
-        x_model = YOLO(f"{script_directory}/temp.pt")
-        x_model.export(format=get_mode(), imgsz=[int(settings['height']), int(settings['width'])], half=True, device=0)
-    elif settings['yolo_version'] == "v5":
-        os.system(f"python {script_directory}/yolov5/export.py --weights {script_directory}/temp.pt --include {get_mode()} --imgsz {int(settings['height'])} {int(settings['width'])} --half --device 0")
-    os.remove(f"{script_directory}/temp.pt")
-    if settings['yolo_mode'] == "tensorrt":
-        os.remove(f"{script_directory}/temp.onnx")
-        shutil.move(f"{script_directory}/temp.engine", f"{models_path}/{get_model_name()}")
-    else:
-        shutil.move(f"{script_directory}/temp.onnx", f"{models_path}/{get_model_name()}")
-    pr_green("Export complete.")
+from model_loader import load_model, export_model, model_existence_check, get_model_name, get_mode
 
 
 def mask_frame(frame):
