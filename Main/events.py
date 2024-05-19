@@ -15,7 +15,6 @@ from Main.shared import (
     label_quit_key,
     image_label_preview
 )
-from main import toggle_overlay
 
 
 def checkbox_auto_aim_event(var_auto_aim, settings):

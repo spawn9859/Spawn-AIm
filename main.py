@@ -85,6 +85,7 @@ from Main.shared import (
     image_label_preview
 )
 from Main.events import (
+    toggle_overlay,
     checkbox_auto_aim_event,
     checkbox_trigger_bot_event,
     checkbox_toggle_event,
