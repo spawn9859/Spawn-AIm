@@ -8,7 +8,12 @@ from main import (
     label_max_move,
     label_mask_width,
     label_mask_height,
-    settings
+    settings,
+    label_activation_bind,
+    label_quit_bind,
+    label_activation_key,
+    label_quit_key,
+    image_label_preview
 )
 
 def slider_sensitivity_event(value):
