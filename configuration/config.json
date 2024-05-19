@@ -8,7 +8,7 @@
     "preview": "off",
     "mask_left": "on",
     "mask_right": "off",
-    "sensitivity": 14.000000000000002,
+    "sensitivity": 15.5,
     "headshot": 40.0,
     "trigger_bot_distance": 8,
     "confidence": 68.0,
@@ -29,5 +29,5 @@
     "quit_key_string": "Q",
     "mouse_input": "default",
     "arduino": "COM1",
-    "max_fps": 165
+    "max_fps": 180
 }
