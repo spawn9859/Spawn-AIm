@@ -13,6 +13,9 @@ label_activation_bind = CTkLabel(master=None)
 label_quit_bind = CTkLabel(master=None)
 label_activation_key = CTkLabel(master=None)
 label_quit_key = CTkLabel(master=None)
-image_label_preview = CTkLabel(master=None)
+from PIL import Image
+image_preview = Image.open(f"{script_directory}/preview.png")
+image_preview_ctk = ctk.CTkImage(size=(240, 240), dark_image=image_preview, light_image=image_preview)
+image_label_preview = CTkLabel(master=None, image=image_preview_ctk, text="")
 
 settings = {}

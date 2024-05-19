@@ -39,7 +39,7 @@ def checkbox_overlay_event(var_overlay, settings, toggle_overlay):
 def checkbox_preview_event(var_preview, settings, image_label_preview, image_preview):
     settings['preview'] = var_preview.get()
     if settings['preview'] == "off":
-        image_label_preview.configure(image=image_preview)
+        image_label_preview.configure(image=image_preview_ctk)
 
 def checkbox_mask_left_event(var_mask_left, settings):
     settings['mask_left'] = var_mask_left.get()
