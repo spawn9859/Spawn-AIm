@@ -345,7 +345,6 @@ def button_reload_event():
         toggle_overlay()
 
 
-from model_loader import load_model, export_model, model_existence_check, get_model_name, get_mode
 
 
 def mask_frame(frame):
