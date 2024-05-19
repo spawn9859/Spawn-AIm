@@ -39,6 +39,14 @@ def create_gui(settings, key_mapping, launcher_models):
     checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=checkbox_preview_event)
     checkbox_preview.place(x=320, y=10)
 
+    var_mask_left = ctk.StringVar(value="off")
+    checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=checkbox_mask_left_event)
+    checkbox_mask_left.place(x=240, y=290)
+
+    var_mask_right = ctk.StringVar(value="off")
+    checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=checkbox_mask_right_event)
+    checkbox_mask_right.place(x=380, y=290)
+
     label_sensitivity = ctk.CTkLabel(root, text="Sensitivity: 0%")
     label_sensitivity.place(x=10, y=100)
 
