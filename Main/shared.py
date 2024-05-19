@@ -1,3 +1,6 @@
+import os
+
+script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
 from customtkinter import CTkLabel, CTkSlider
 
 label_sensitivity = CTkLabel(master=None)
