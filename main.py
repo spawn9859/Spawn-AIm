@@ -513,6 +513,7 @@ def send_targets():
 
 
 
+from event_handlers import checkbox_auto_aim_event, checkbox_trigger_bot_event, checkbox_toggle_event, checkbox_recoil_event, checkbox_aim_shake_event, checkbox_overlay_event, slider_sensitivity_event, slider_headshot_event, slider_trigger_bot_event, slider_confidence_event, slider_recoil_strength_event, slider_aim_shake_strength_event, slider_max_move_event
 from gui import create_gui
 
 root, var_auto_aim, var_trigger_bot, var_toggle, var_recoil, var_aim_shake, var_overlay, label_sensitivity, slider_sensitivity, label_headshot, slider_headshot, label_trigger_bot, slider_trigger_bot, label_confidence, slider_confidence, label_recoil_strength, slider_recoil_strength, label_aim_shake_strength, slider_aim_shake_strength, label_max_move, slider_max_move = create_gui(settings, key_mapping, launcher_models)
