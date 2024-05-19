@@ -38,6 +38,7 @@ if torch.cuda.is_available():
     import cupy as cp
 
 from config_loader import load_configuration
+from model_loader import load_model
 
 key_mapping, settings = load_configuration(script_directory)
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
