@@ -755,6 +755,8 @@ def main(**argv):
                         model.iou = settings['confidence'] / 100
                         results = model(frame, size=[settings['height'], settings['width']])
                         pr_blue(f"Results: {results.xyxy[0]}")
+                        pr_blue(f"Model confidence: {model.conf}")
+                        pr_blue(f"Model iou: {model.iou}")
                         if len(results.xyxy[0]) != 0:
                             for box in results.xyxy[0]:
                                 box_result = calculate_targets(box[0], box[1], box[2], box[3])
@@ -766,6 +768,8 @@ def main(**argv):
                     results = model.predict(frame, verbose=False, conf=settings['confidence'] / 100, iou=settings['confidence'] / 100, half=False, imgsz=[settings['height'], settings['width']])
                     for result in results:
                         pr_blue(f"Result: {result.boxes.xyxy}")
+                        pr_blue(f"Model confidence: {model.conf}")
+                        pr_blue(f"Model iou: {model.iou}")
                         if len(result.boxes.xyxy) != 0:
                             for box in result.boxes.xyxy:
                                 box_result = calculate_targets(box[0], box[1], box[2], box[3])
@@ -801,6 +805,8 @@ def main(**argv):
                     predictions = ops.non_max_suppression(frame, settings['confidence'] / 100, settings['confidence'] / 100, 0, False, max_det=4)
 
                 pr_blue(f"Predictions: {predictions}")
+                pr_blue(f"Model confidence: {model.conf}")
+                pr_blue(f"Model iou: {model.iou}")
                 for i, det in enumerate(predictions):
                     if len(det):
                         for *xyxy, conf, cls in reversed(det):

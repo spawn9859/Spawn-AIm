@@ -47,6 +47,8 @@ def load_model(settings, models_path, script_directory):
     model_existence_check(settings, models_path, script_directory)
     pr_blue(f"Loading {get_model_name(settings)} with yolo{settings['yolo_version']} for {settings['yolo_mode']} inference.")
     pr_blue(f"Model path: {models_path}/{get_model_name(settings)}")
+    pr_blue(f"Settings: {settings}")
+    pr_blue(f"Model path: {models_path}/{get_model_name(settings)}")
 
     if not settings['yolo_mode'] == "onnx":
         if settings['yolo_version'] == "v8":
