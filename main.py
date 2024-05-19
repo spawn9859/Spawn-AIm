@@ -41,6 +41,9 @@ with open(f"{script_directory}/configuration/key_mapping.json", 'r') as json_fil
 with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
     settings = json.load(json_file)
 
+# Ensure 'max_fps' key exists in settings with a default value
+settings.setdefault('max_fps', 60)
+
 model, screen, overlay, canvas, random_x, random_y, arduino = None, None, None, None, 0, 0, None
 models_path = os.path.join(script_directory, "models")
 launcher_models = [os.path.splitext(file)[0] for file in [file for file in os.listdir(models_path) if file.endswith(".pt")]]
@@ -521,7 +524,7 @@ label_fps.place(x=10, y=670)
 
 combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
 combobox_fps.place(x=10, y=700)
-combobox_fps.set(str(settings['max_fps']))
+combobox_fps.set(str(settings.get('max_fps', 60)))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
 label_yolo_version.place(x=10, y=550)
