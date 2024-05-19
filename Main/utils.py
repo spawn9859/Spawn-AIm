@@ -17,3 +17,5 @@ def print_colored(text, color):
     print(color_code + text, Style.RESET_ALL)
 def pr_blue(text):
     print_colored(text, "blue")
+def pr_green(text):
+    print_colored(text, "green")

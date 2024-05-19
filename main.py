@@ -67,7 +67,7 @@ def get_left_trigger():
     return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
 
     
-from Main.utils import print_colored, pr_blue
+from Main.utils import print_colored, pr_blue, pr_green
 
 
 def checkbox_auto_aim_event():
