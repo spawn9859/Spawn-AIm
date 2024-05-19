@@ -906,7 +906,7 @@ def main(**argv):
                                 targets.append(box_result[0])
                                 distances.append(box_result[1])
 
-            send_targets(controller, settings, targets, distances, random_x, random_y)
+            send_targets(controller, settings, targets, distances, random_x, random_y, get_left_trigger)
 
         if settings['preview'] == "on":
             update_preview(np_frame)

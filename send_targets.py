@@ -1,9 +1,7 @@
 import math
 import win32api
 import win32con
-from main import get_left_trigger
-
-def send_targets(controller, settings, targets, distances, random_x, random_y):
+def send_targets(controller, settings, targets, distances, random_x, random_y, get_left_trigger):
     def mouse_click():
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
