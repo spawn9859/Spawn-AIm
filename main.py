@@ -524,7 +524,7 @@ label_fps.place(x=10, y=670)
 
 combobox_fps = ctk.CTkComboBox(root, values=["30", "60", "90", "120", "144", "165", "180"], command=combobox_fps_callback, state="readonly")
 combobox_fps.place(x=10, y=700)
-combobox_fps.set(str(settings.get('max_fps', 60)))
+combobox_fps.set(str(settings.get('max_fps', 180)))
 
 label_yolo_version = ctk.CTkLabel(root, text="Yolo version:")
 label_yolo_version.place(x=10, y=550)
