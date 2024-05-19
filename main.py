@@ -67,7 +67,23 @@ def get_left_trigger():
     return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
 
     
-from Main.utils import print_colored, pr_blue, pr_green
+from Main.shared import (
+    label_sensitivity,
+    label_headshot,
+    label_trigger_bot,
+    label_confidence,
+    label_recoil_strength,
+    label_aim_shake_strength,
+    label_max_move,
+    label_mask_width,
+    label_mask_height,
+    settings,
+    label_activation_bind,
+    label_quit_bind,
+    label_activation_key,
+    label_quit_key,
+    image_label_preview
+)
 from Main.events import (
     checkbox_auto_aim_event,
     checkbox_trigger_bot_event,
