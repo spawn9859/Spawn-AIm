@@ -77,61 +77,17 @@ from Main.events import (
     checkbox_overlay_event,
     checkbox_preview_event,
     checkbox_mask_left_event,
-    checkbox_mask_right_event
+    checkbox_mask_right_event,
+    slider_sensitivity_event,
+    slider_headshot_event,
+    slider_trigger_bot_event,
+    slider_confidence_event,
+    slider_recoil_strength_event,
+    slider_aim_shake_strength_event,
+    slider_max_move_event,
+    slider_mask_width_event,
+    slider_mask_height_event
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def slider_sensitivity_event(value):
-    label_sensitivity.configure(text=f"Sensitivity: {round(value)}%")
-    settings['sensitivity'] = value
-
-
-def slider_headshot_event(value):
-    label_headshot.configure(text=f"Headshot offset: {round(value)}%")
-    settings['headshot'] = value
-
-
-def slider_trigger_bot_event(value):
-    label_trigger_bot.configure(text=f"Trigger bot distance: {round(value)} px")
-    settings['trigger_bot_distance'] = value
-
-
-def slider_confidence_event(value):
-    label_confidence.configure(text=f"Confidence: {round(value)}%")
-    settings['confidence'] = value
-
-
-def slider_recoil_strength_event(value):
-    label_recoil_strength.configure(text=f"Recoil control strength: {round(value)}%")
-    settings['recoil_strength'] = value
-
-
-def slider_aim_shake_strength_event(value):
-    label_aim_shake_strength.configure(text=f"Aim shake strength: {round(value)}%")
-    settings['aim_shake_strength'] = value
-
-
-def slider_max_move_event(value):
-    label_max_move.configure(text=f"Max move speed: {round(value)} px")
-    settings['max_move'] = value
 
 
 def combobox_fps_callback(choice):
@@ -139,15 +95,6 @@ def combobox_fps_callback(choice):
     with open(f"{script_directory}/configuration/config.json", 'w') as json_file:
         json.dump(settings, json_file, indent=4)
     button_reload_event()
-
-def slider_mask_width_event(value):
-    label_mask_width.configure(text=f"Mask width: {round(value)} px")
-    settings['mask_width'] = value
-
-
-def slider_mask_height_event(value):
-    label_mask_height.configure(text=f"Mask height: {round(value)} px")
-    settings['mask_height'] = value
 
 
 def combobox_yolo_version_callback(choice):
