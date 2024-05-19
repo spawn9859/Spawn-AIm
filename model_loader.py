@@ -67,7 +67,6 @@ def load_model(settings, models_path, script_directory):
 
     if model is None:
         raise ValueError(f"Failed to load model: {get_model_name(settings)}")
-    if model is None:
-        raise ValueError(f"Failed to load model: {get_model_name(settings)}")
     else:
         pr_green("Model loaded successfully.")
+    return model
