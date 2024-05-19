@@ -1,5 +1,4 @@
 from customtkinter import CTkLabel, CTkSlider
-from main import toggle_overlay
 
 label_sensitivity = CTkLabel()
 label_headshot = CTkLabel()
