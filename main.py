@@ -55,20 +55,7 @@ targets = []
 distances = []
 coordinates = []
 
-def initialize_pygame_and_controller():
-    pygame.init()
-    pygame.joystick.init()
-    try:
-        controller = pygame.joystick.Joystick(0)  # Assumes the controller is the first joystick
-        controller.init()
-        return controller
-    except pygame.error:
-        print("Unable to initialize the Xbox Controller")
-        return None
-    
-# Define a function to get the left trigger value
-def get_left_trigger(controller):
-    return (controller.get_axis(4) + 1) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
+from controller_setup import initialize_pygame_and_controller, get_left_trigger
 
     
 def pr_red(skk): print(Fore.RED + skk, Style.RESET_ALL)
