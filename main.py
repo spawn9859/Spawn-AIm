@@ -575,8 +575,9 @@ checkbox_preview.place(x=320, y=10)
 label_fps = ctk.CTkLabel(root, text="Fps:")
 label_fps.place(x=240, y=10)
 
-image_preview = ctk.CTkImage(size=(240, 240), dark_image=Image.open(f"{script_directory}/preview.png"), light_image=Image.open(f"{script_directory}/preview.png"))
-image_label_preview = ctk.CTkLabel(root, image=image_preview, text="")
+image_preview = Image.open(f"{script_directory}/preview.png")
+image_preview_ctk = ctk.CTkImage(size=(240, 240), dark_image=image_preview, light_image=image_preview)
+image_label_preview = ctk.CTkLabel(root, image=image_preview_ctk, text="")
 image_label_preview.place(x=240, y=40)
 
 var_mask_left = ctk.StringVar(value="off")
