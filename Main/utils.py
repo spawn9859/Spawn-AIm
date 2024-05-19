@@ -15,3 +15,5 @@ def print_colored(text, color):
     }
     color_code = color_mapping.get(color.upper(), Fore.RESET)
     print(color_code + text, Style.RESET_ALL)
+def pr_blue(text):
+    print_colored(text, "blue")
