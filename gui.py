@@ -89,4 +89,16 @@ def create_gui(settings, key_mapping, launcher_models):
     slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_event)
     slider_max_move.place(x=10, y=425)
 
+    label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
+    label_mask_width.place(x=240, y=320)
+
+    slider_mask_width = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_width_event)
+    slider_mask_width.place(x=240, y=345)
+
+    label_mask_height = ctk.CTkLabel(root, text=f"Mask height: 0 px")
+    label_mask_height.place(x=240, y=370)
+
+    slider_mask_height = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_height_event)
+    slider_mask_height.place(x=240, y=395)
+
     return root, var_auto_aim, var_trigger_bot, var_toggle, var_recoil, var_aim_shake, var_overlay, var_preview, var_mask_left, var_mask_right, label_sensitivity, slider_sensitivity, label_headshot, slider_headshot, label_trigger_bot, slider_trigger_bot, label_confidence, slider_confidence, label_recoil_strength, slider_recoil_strength, label_aim_shake_strength, slider_aim_shake_strength, label_max_move, slider_max_move, checkbox_auto_aim, checkbox_trigger_bot, checkbox_toggle, checkbox_recoil, checkbox_aim_shake, checkbox_overlay, checkbox_preview, checkbox_mask_left, checkbox_mask_right, label_mask_width, slider_mask_width, label_mask_height, slider_mask_height, combobox_fps, combobox_yolo_version, combobox_yolo_model, combobox_yolo_mode, combobox_yolo_device, combobox_yolo_model_size, button_reload, button_keybindings, combobox_mouse_input, combobox_arduino, label_activation_key, label_quit_key, label_activation_bind, label_quit_bind, combobox_mouse_activation_bind, combobox_mouse_quit_bind, image_label_preview
