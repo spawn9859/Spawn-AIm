@@ -1,5 +1,6 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk
+from main import checkbox_auto_aim_event, checkbox_trigger_bot_event, checkbox_toggle_event, checkbox_recoil_event, checkbox_aim_shake_event, checkbox_overlay_event, slider_sensitivity_event, slider_headshot_event, slider_trigger_bot_event, slider_confidence_event, slider_recoil_strength_event, slider_aim_shake_strength_event, slider_max_move_event
 import os
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
