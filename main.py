@@ -48,6 +48,12 @@ with open(f"{script_directory}/configuration/config.json", 'r') as json_file:
 for key, value in default_settings.items():
     settings.setdefault(key, value)
 
+# Ensure activation_key_string and quit_key_string are present
+if 'activation_key_string' not in settings:
+    settings['activation_key_string'] = default_settings.get('activation_key_string', 'Alt')
+if 'quit_key_string' not in settings:
+    settings['quit_key_string'] = default_settings.get('quit_key_string', 'Q')
+
 # Debugging: Print settings to verify
 print("Settings after loading defaults:", settings)
 
