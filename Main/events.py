@@ -1,4 +1,4 @@
-from main import (
+from Main.shared import (
     label_sensitivity,
     label_headshot,
     label_trigger_bot,
