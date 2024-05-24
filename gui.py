@@ -1,9 +1,45 @@
 import customtkinter as ctk
 from PIL import Image, ImageTk
-from event_handlers import checkbox_auto_aim_event, checkbox_trigger_bot_event, checkbox_toggle_event, checkbox_recoil_event, checkbox_aim_shake_event, checkbox_overlay_event, checkbox_preview_event, checkbox_mask_left_event, checkbox_mask_right_event, slider_sensitivity_event, slider_headshot_event, slider_trigger_bot_event, slider_confidence_event, slider_recoil_strength_event, slider_aim_shake_strength_event, slider_max_move_event, combobox_fps_callback, slider_mask_width_event, slider_mask_height_event, combobox_yolo_version_callback, combobox_yolo_model_callback, combobox_yolo_model_size_callback, combobox_yolo_mode_callback, combobox_yolo_device_callback, combobox_mouse_input_callback, combobox_arduino_callback, combobox_mouse_activation_bind_callback, combobox_mouse_quit_bind_callback, button_activation_bind_event, button_quit_bind_event, button_keybindings_event, button_reload_event
+from event_handlers import (
+    checkbox_auto_aim_event,
+    checkbox_trigger_bot_event,
+    checkbox_toggle_event,
+    checkbox_recoil_event,
+    checkbox_aim_shake_event,
+    checkbox_overlay_event,
+    checkbox_preview_event,
+    checkbox_mask_left_event,
+    checkbox_mask_right_event,
+    slider_sensitivity_event,
+    slider_headshot_event,
+    slider_trigger_bot_event,
+    slider_confidence_event,
+    slider_recoil_strength_event,
+    slider_aim_shake_strength_event,
+    slider_max_move_event,
+    combobox_fps_callback,
+    slider_mask_width_event,
+    slider_mask_height_event,
+    combobox_yolo_version_callback,
+    combobox_yolo_model_callback,
+    combobox_yolo_model_size_callback,
+    combobox_yolo_mode_callback,
+    combobox_yolo_device_callback,
+    combobox_mouse_input_callback,
+    combobox_arduino_callback,
+    combobox_mouse_activation_bind_callback,
+    combobox_mouse_quit_bind_callback,
+    button_activation_bind_event,
+    button_quit_bind_event,
+    button_keybindings_event,
+    button_reload_event,
+)
 import os
 
-script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
+script_directory = os.path.dirname(
+    os.path.abspath(__file__ if "__file__" in locals() else __file__)
+)
+
 
 def create_gui(settings, key_mapping, launcher_models):
     root = ctk.CTk()
@@ -12,93 +48,229 @@ def create_gui(settings, key_mapping, launcher_models):
     root.resizable(width=False, height=False)
 
     var_auto_aim = ctk.StringVar(value="off")
-    checkbox_auto_aim = ctk.CTkCheckBox(root, text="Auto aim", variable=var_auto_aim, onvalue="on", offvalue="off", command=checkbox_auto_aim_event)
+    checkbox_auto_aim = ctk.CTkCheckBox(
+        root,
+        text="Auto aim",
+        variable=var_auto_aim,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_auto_aim_event,
+    )
     checkbox_auto_aim.place(x=10, y=10)
 
     var_trigger_bot = ctk.StringVar(value="off")
-    checkbox_trigger_bot = ctk.CTkCheckBox(root, text="Trigger bot", variable=var_trigger_bot, onvalue="on", offvalue="off", command=checkbox_trigger_bot_event)
+    checkbox_trigger_bot = ctk.CTkCheckBox(
+        root,
+        text="Trigger bot",
+        variable=var_trigger_bot,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_trigger_bot_event,
+    )
     checkbox_trigger_bot.place(x=10, y=40)
 
     var_toggle = ctk.StringVar(value="off")
-    checkbox_toggle = ctk.CTkCheckBox(root, text="Auto aim toggle", variable=var_toggle, onvalue="on", offvalue="off", command=checkbox_toggle_event)
+    checkbox_toggle = ctk.CTkCheckBox(
+        root,
+        text="Auto aim toggle",
+        variable=var_toggle,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_toggle_event,
+    )
     checkbox_toggle.place(x=110, y=10)
 
     var_recoil = ctk.StringVar(value="off")
-    checkbox_recoil = ctk.CTkCheckBox(root, text="Recoil control", variable=var_recoil, onvalue="on", offvalue="off", command=checkbox_recoil_event)
+    checkbox_recoil = ctk.CTkCheckBox(
+        root,
+        text="Recoil control",
+        variable=var_recoil,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_recoil_event,
+    )
     checkbox_recoil.place(x=110, y=40)
 
     var_aim_shake = ctk.StringVar(value="off")
-    checkbox_aim_shake = ctk.CTkCheckBox(root, text="Aim shake", variable=var_aim_shake, onvalue="on", offvalue="off", command=checkbox_aim_shake_event)
+    checkbox_aim_shake = ctk.CTkCheckBox(
+        root,
+        text="Aim shake",
+        variable=var_aim_shake,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_aim_shake_event,
+    )
     checkbox_aim_shake.place(x=10, y=70)
 
     var_overlay = ctk.StringVar(value="off")
-    checkbox_overlay = ctk.CTkCheckBox(root, text="Overlay", variable=var_overlay, onvalue="on", offvalue="off", command=checkbox_overlay_event)
+    checkbox_overlay = ctk.CTkCheckBox(
+        root,
+        text="Overlay",
+        variable=var_overlay,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_overlay_event,
+    )
     checkbox_overlay.place(x=110, y=70)
 
     var_preview = ctk.StringVar(value="off")
-    checkbox_preview = ctk.CTkCheckBox(root, text="Preview", variable=var_preview, onvalue="on", offvalue="off", command=checkbox_preview_event)
+    checkbox_preview = ctk.CTkCheckBox(
+        root,
+        text="Preview",
+        variable=var_preview,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_preview_event,
+    )
     checkbox_preview.place(x=320, y=10)
 
     var_mask_left = ctk.StringVar(value="off")
-    checkbox_mask_left = ctk.CTkCheckBox(root, text="Mask left", variable=var_mask_left, onvalue="on", offvalue="off", command=checkbox_mask_left_event)
+    checkbox_mask_left = ctk.CTkCheckBox(
+        root,
+        text="Mask left",
+        variable=var_mask_left,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_mask_left_event,
+    )
     checkbox_mask_left.place(x=240, y=290)
 
     var_mask_right = ctk.StringVar(value="off")
-    checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=checkbox_mask_right_event)
+    checkbox_mask_right = ctk.CTkCheckBox(
+        root,
+        text="Mask right",
+        variable=var_mask_right,
+        onvalue="on",
+        offvalue="off",
+        command=checkbox_mask_right_event,
+    )
     checkbox_mask_right.place(x=380, y=290)
 
     label_sensitivity = ctk.CTkLabel(root, text="Sensitivity: 0%")
     label_sensitivity.place(x=10, y=100)
 
-    slider_sensitivity = ctk.CTkSlider(root, from_=0, to=100, command=slider_sensitivity_event)
+    slider_sensitivity = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_sensitivity_event
+    )
     slider_sensitivity.place(x=10, y=125)
 
     label_headshot = ctk.CTkLabel(root, text="Headshot offset: 0%")
     label_headshot.place(x=10, y=150)
 
-    slider_headshot = ctk.CTkSlider(root, from_=0, to=100, command=slider_headshot_event)
+    slider_headshot = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_headshot_event
+    )
     slider_headshot.place(x=10, y=175)
 
     label_trigger_bot = ctk.CTkLabel(root, text=f"Trigger bot distance: 0 px")
     label_trigger_bot.place(x=10, y=200)
 
-    slider_trigger_bot = ctk.CTkSlider(root, from_=0, to=100, command=slider_trigger_bot_event)
+    slider_trigger_bot = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_trigger_bot_event
+    )
     slider_trigger_bot.place(x=10, y=225)
 
     label_confidence = ctk.CTkLabel(root, text=f"Confidence: 0%")
     label_confidence.place(x=10, y=250)
 
-    slider_confidence = ctk.CTkSlider(root, from_=0, to=100, command=slider_confidence_event)
+    slider_confidence = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_confidence_event
+    )
     slider_confidence.place(x=10, y=275)
 
     label_recoil_strength = ctk.CTkLabel(root, text=f"Recoil control strength: 0%")
     label_recoil_strength.place(x=10, y=300)
 
-    slider_recoil_strength = ctk.CTkSlider(root, from_=0, to=100, command=slider_recoil_strength_event)
+    slider_recoil_strength = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_recoil_strength_event
+    )
     slider_recoil_strength.place(x=10, y=325)
 
     label_aim_shake_strength = ctk.CTkLabel(root, text=f"Aim shake strength: 0%")
     label_aim_shake_strength.place(x=10, y=350)
 
-    slider_aim_shake_strength = ctk.CTkSlider(root, from_=0, to=100, command=slider_aim_shake_strength_event)
+    slider_aim_shake_strength = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_aim_shake_strength_event
+    )
     slider_aim_shake_strength.place(x=10, y=375)
 
     label_max_move = ctk.CTkLabel(root, text=f"Max move speed: 0 px")
     label_max_move.place(x=10, y=400)
 
-    slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_event)
+    slider_max_move = ctk.CTkSlider(
+        root, from_=0, to=100, command=slider_max_move_event
+    )
     slider_max_move.place(x=10, y=425)
 
     label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
     label_mask_width.place(x=240, y=320)
 
-    slider_mask_width = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_width_event)
+    slider_mask_width = ctk.CTkSlider(
+        root, from_=0, to=640, command=slider_mask_width_event
+    )
     slider_mask_width.place(x=240, y=345)
 
     label_mask_height = ctk.CTkLabel(root, text=f"Mask height: 0 px")
     label_mask_height.place(x=240, y=370)
 
-    slider_mask_height = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_height_event)
+    slider_mask_height = ctk.CTkSlider(
+        root, from_=0, to=640, command=slider_mask_height_event
+    )
     slider_mask_height.place(x=240, y=395)
 
-    return root, var_auto_aim, var_trigger_bot, var_toggle, var_recoil, var_aim_shake, var_overlay, var_preview, var_mask_left, var_mask_right, label_sensitivity, slider_sensitivity, label_headshot, slider_headshot, label_trigger_bot, slider_trigger_bot, label_confidence, slider_confidence, label_recoil_strength, slider_recoil_strength, label_aim_shake_strength, slider_aim_shake_strength, label_max_move, slider_max_move, checkbox_auto_aim, checkbox_trigger_bot, checkbox_toggle, checkbox_recoil, checkbox_aim_shake, checkbox_overlay, checkbox_preview, checkbox_mask_left, checkbox_mask_right, label_mask_width, slider_mask_width, label_mask_height, slider_mask_height, combobox_fps, combobox_yolo_version, combobox_yolo_model, combobox_yolo_mode, combobox_yolo_device, combobox_yolo_model_size, button_reload, button_keybindings, combobox_mouse_input, combobox_arduino, label_activation_key, label_quit_key, label_activation_bind, label_quit_bind, combobox_mouse_activation_bind, combobox_mouse_quit_bind, image_label_preview
+    return (
+        root,
+        var_auto_aim,
+        var_trigger_bot,
+        var_toggle,
+        var_recoil,
+        var_aim_shake,
+        var_overlay,
+        var_preview,
+        var_mask_left,
+        var_mask_right,
+        label_sensitivity,
+        slider_sensitivity,
+        label_headshot,
+        slider_headshot,
+        label_trigger_bot,
+        slider_trigger_bot,
+        label_confidence,
+        slider_confidence,
+        label_recoil_strength,
+        slider_recoil_strength,
+        label_aim_shake_strength,
+        slider_aim_shake_strength,
+        label_max_move,
+        slider_max_move,
+        checkbox_auto_aim,
+        checkbox_trigger_bot,
+        checkbox_toggle,
+        checkbox_recoil,
+        checkbox_aim_shake,
+        checkbox_overlay,
+        checkbox_preview,
+        checkbox_mask_left,
+        checkbox_mask_right,
+        label_mask_width,
+        slider_mask_width,
+        label_mask_height,
+        slider_mask_height,
+        combobox_fps,
+        combobox_yolo_version,
+        combobox_yolo_model,
+        combobox_yolo_mode,
+        combobox_yolo_device,
+        combobox_yolo_model_size,
+        button_reload,
+        button_keybindings,
+        combobox_mouse_input,
+        combobox_arduino,
+        label_activation_key,
+        label_quit_key,
+        label_activation_bind,
+        label_quit_bind,
+        combobox_mouse_activation_bind,
+        combobox_mouse_quit_bind,
+        image_label_preview,
+    )
