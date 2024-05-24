@@ -15,16 +15,18 @@ import serial
 import keyboard
 import onnxruntime as ort
 import serial.tools.list_ports
-from PIL import Image, ImageTk
-from colorama import Fore, Back, Style
+from PIL import Image
+from colorama import Fore, Style
 import customtkinter as ctk
 import win32api
 import win32con
 import win32gui
-
+from utils.general import non_max_suppression
 from ultralytics import YOLO
 from ultralytics.utils import ops
 import bettercam
+from controller_setup import initialize_pygame_and_controller, get_left_trigger
+from send_targets import send_targets
 
 script_directory = os.path.dirname(os.path.abspath(__file__ if "__file__" in locals() else __file__))
 if not os.path.exists(f"{script_directory}/yolov5"):
@@ -32,7 +34,7 @@ if not os.path.exists(f"{script_directory}/yolov5"):
     os.system(f"pip install -r {script_directory}/yolov5/requirements.txt")
 sys.path.append(f"{script_directory}/yolov5")
 
-from utils.general import non_max_suppression
+
 
 if torch.cuda.is_available():
     import cupy as cp
@@ -55,7 +57,7 @@ targets = []
 distances = []
 coordinates = []
 
-from controller_setup import initialize_pygame_and_controller, get_left_trigger
+
 
     
 def pr_red(skk): print(Fore.RED + skk, Style.RESET_ALL)
@@ -476,7 +478,7 @@ def calculate_targets(x1, y1, x2, y2):
     return (x, y), distance
 
 
-from send_targets import send_targets
+
 
 
 
@@ -521,31 +523,31 @@ label_headshot.place(x=10, y=150)
 slider_headshot = ctk.CTkSlider(root, from_=0, to=100, command=slider_headshot_event)
 slider_headshot.place(x=10, y=175)
 
-label_trigger_bot = ctk.CTkLabel(root, text=f"Trigger bot distance: 0 px")
+label_trigger_bot = ctk.CTkLabel(root, text="Trigger bot distance: 0 px")
 label_trigger_bot.place(x=10, y=200)
 
 slider_trigger_bot = ctk.CTkSlider(root, from_=0, to=100, command=slider_trigger_bot_event)
 slider_trigger_bot.place(x=10, y=225)
 
-label_confidence = ctk.CTkLabel(root, text=f"Confidence: 0%")
+label_confidence = ctk.CTkLabel(root, text="Confidence: 0%")
 label_confidence.place(x=10, y=250)
 
 slider_confidence = ctk.CTkSlider(root, from_=0, to=100, command=slider_confidence_event)
 slider_confidence.place(x=10, y=275)
 
-label_recoil_strength = ctk.CTkLabel(root, text=f"Recoil control strength: 0%")
+label_recoil_strength = ctk.CTkLabel(root, text="Recoil control strength: 0%")
 label_recoil_strength.place(x=10, y=300)
 
 slider_recoil_strength = ctk.CTkSlider(root, from_=0, to=100, command=slider_recoil_strength_event)
 slider_recoil_strength.place(x=10, y=325)
 
-label_aim_shake_strength = ctk.CTkLabel(root, text=f"Aim shake strength: 0%")
+label_aim_shake_strength = ctk.CTkLabel(root, text="Aim shake strength: 0%")
 label_aim_shake_strength.place(x=10, y=350)
 
 slider_aim_shake_strength = ctk.CTkSlider(root, from_=0, to=100, command=slider_aim_shake_strength_event)
 slider_aim_shake_strength.place(x=10, y=375)
 
-label_max_move = ctk.CTkLabel(root, text=f"Max move speed: 0 px")
+label_max_move = ctk.CTkLabel(root, text="Max move speed: 0 px")
 label_max_move.place(x=10, y=400)
 
 slider_max_move = ctk.CTkSlider(root, from_=0, to=100, command=slider_max_move_event)
@@ -594,10 +596,10 @@ button_reload.place(x=310, y=640)
 button_keybindings = ctk.CTkButton(root, text="Configure keybindings", command=button_keybindings_event)
 button_keybindings.place(x=10, y=525)
 
-label_activation_key = ctk.CTkLabel(root, text=f"Activation key: None")
+label_activation_key = ctk.CTkLabel(root, text="Activation key: None")
 label_activation_key.place(x=10, y=455)
 
-label_quit_key = ctk.CTkLabel(root, text=f"Quit key: None")
+label_quit_key = ctk.CTkLabel(root, text="Quit key: None")
 label_quit_key.place(x=10, y=485)
 
 var_preview = ctk.StringVar(value="off")
@@ -619,25 +621,25 @@ var_mask_right = ctk.StringVar(value="off")
 checkbox_mask_right = ctk.CTkCheckBox(root, text="Mask right", variable=var_mask_right, onvalue="on", offvalue="off", command=checkbox_mask_right_event)
 checkbox_mask_right.place(x=380, y=290)
 
-label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
+label_mask_width = ctk.CTkLabel(root, text="Mask width: 0 px")
 label_mask_width.place(x=240, y=320)
 
 slider_mask_width = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_width_event)
 slider_mask_width.place(x=240, y=345)
 
-label_mask_height = ctk.CTkLabel(root, text=f"Mask height: 0 px")
+label_mask_height = ctk.CTkLabel(root, text="Mask height: 0 px")
 label_mask_height.place(x=240, y=370)
 
 slider_mask_height = ctk.CTkSlider(root, from_=0, to=640, command=slider_mask_height_event)
 slider_mask_height.place(x=240, y=395)
 
-label_mouse_input = ctk.CTkLabel(root, text=f"Mouse input method:")
+label_mouse_input = ctk.CTkLabel(root, text="Mouse input method:")
 label_mouse_input.place(x=310, y=420)
 
 combobox_mouse_input = ctk.CTkComboBox(root, values=["default"], command=combobox_mouse_input_callback, state="readonly")
 combobox_mouse_input.place(x=310, y=450)
 
-label_mouse_input = ctk.CTkLabel(root, text=f"Arduino port:")
+label_mouse_input = ctk.CTkLabel(root, text="Arduino port:")
 label_mouse_input.place(x=310, y=480)
 
 combobox_arduino = ctk.CTkComboBox(root, values=["COM1"], command=combobox_arduino_callback, state="readonly")
