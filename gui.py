@@ -1,5 +1,4 @@
 import customtkinter as ctk
-from PIL import Image, ImageTk
 from event_handlers import (
     checkbox_auto_aim_event,
     checkbox_trigger_bot_event,
@@ -17,22 +16,8 @@ from event_handlers import (
     slider_recoil_strength_event,
     slider_aim_shake_strength_event,
     slider_max_move_event,
-    combobox_fps_callback,
     slider_mask_width_event,
     slider_mask_height_event,
-    combobox_yolo_version_callback,
-    combobox_yolo_model_callback,
-    combobox_yolo_model_size_callback,
-    combobox_yolo_mode_callback,
-    combobox_yolo_device_callback,
-    combobox_mouse_input_callback,
-    combobox_arduino_callback,
-    combobox_mouse_activation_bind_callback,
-    combobox_mouse_quit_bind_callback,
-    button_activation_bind_event,
-    button_quit_bind_event,
-    button_keybindings_event,
-    button_reload_event,
 )
 import os
 
@@ -162,7 +147,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_headshot.place(x=10, y=175)
 
-    label_trigger_bot = ctk.CTkLabel(root, text=f"Trigger bot distance: 0 px")
+    label_trigger_bot = ctk.CTkLabel(root, text="Trigger bot distance: 0 px")
     label_trigger_bot.place(x=10, y=200)
 
     slider_trigger_bot = ctk.CTkSlider(
@@ -170,7 +155,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_trigger_bot.place(x=10, y=225)
 
-    label_confidence = ctk.CTkLabel(root, text=f"Confidence: 0%")
+    label_confidence = ctk.CTkLabel(root, text="Confidence: 0%")
     label_confidence.place(x=10, y=250)
 
     slider_confidence = ctk.CTkSlider(
@@ -178,7 +163,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_confidence.place(x=10, y=275)
 
-    label_recoil_strength = ctk.CTkLabel(root, text=f"Recoil control strength: 0%")
+    label_recoil_strength = ctk.CTkLabel(root, text="Recoil control strength: 0%")
     label_recoil_strength.place(x=10, y=300)
 
     slider_recoil_strength = ctk.CTkSlider(
@@ -186,7 +171,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_recoil_strength.place(x=10, y=325)
 
-    label_aim_shake_strength = ctk.CTkLabel(root, text=f"Aim shake strength: 0%")
+    label_aim_shake_strength = ctk.CTkLabel(root, text="Aim shake strength: 0%")
     label_aim_shake_strength.place(x=10, y=350)
 
     slider_aim_shake_strength = ctk.CTkSlider(
@@ -194,7 +179,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_aim_shake_strength.place(x=10, y=375)
 
-    label_max_move = ctk.CTkLabel(root, text=f"Max move speed: 0 px")
+    label_max_move = ctk.CTkLabel(root, text="Max move speed: 0 px")
     label_max_move.place(x=10, y=400)
 
     slider_max_move = ctk.CTkSlider(
@@ -202,7 +187,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_max_move.place(x=10, y=425)
 
-    label_mask_width = ctk.CTkLabel(root, text=f"Mask width: 0 px")
+    label_mask_width = ctk.CTkLabel(root, text="Mask width: 0 px")
     label_mask_width.place(x=240, y=320)
 
     slider_mask_width = ctk.CTkSlider(
@@ -210,7 +195,7 @@ def create_gui(settings, key_mapping, launcher_models):
     )
     slider_mask_width.place(x=240, y=345)
 
-    label_mask_height = ctk.CTkLabel(root, text=f"Mask height: 0 px")
+    label_mask_height = ctk.CTkLabel(root, text="Mask height: 0 px")
     label_mask_height.place(x=240, y=370)
 
     slider_mask_height = ctk.CTkSlider(
