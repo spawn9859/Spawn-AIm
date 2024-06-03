@@ -909,7 +909,7 @@ def main(**argv):
     with open(
         os.path.join(
             script_directory,
-            "aimbotSettings",
+            "configuration",
             f"{argv['settingsProfile'].lower()}.json",
         ),
         "r",
@@ -936,7 +936,7 @@ def main(**argv):
     if quit_key is None:
         quit_key = win32api.VkKeyScan(launcher_settings["quitKey"])
 
-    settings["auto_aim"] = "off"
+    settings["auto_aim"] = "on"
     settings["trigger_bot"] = "on" if launcher_settings["autoFire"] else "off"
     settings["toggle"] = "on" if launcher_settings["toggleable"] else "off"
     settings["recoil"] = "off"
@@ -1233,4 +1233,4 @@ def main(**argv):
 
 
 if __name__ == "__main__":
-    main(settingsProfile="default", yoloVersion=5, version=0)
+    main(settingsProfile="config", yoloVersion=5, version=0)
