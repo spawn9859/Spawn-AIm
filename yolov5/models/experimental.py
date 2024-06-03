@@ -1,7 +1,5 @@
 # YOLOv5 🚀 by Ultralytics, AGPL-3.0 license
-"""
-Experimental modules
-"""
+"""Experimental modules."""
 
 import math
 
@@ -13,17 +11,20 @@ from utils.downloads import attempt_download
 
 
 class Sum(nn.Module):
-    # Weighted sum of 2 or more layers https://arxiv.org/abs/1911.09070
-    def __init__(self, n, weight=False):  # n: number of inputs
+    """Weighted sum of 2 or more layers https://arxiv.org/abs/1911.09070."""
+
+    def __init__(self, n, weight=False):
+        """Initializes a module to sum outputs of layers with number of inputs `n` and optional weighting, supporting 2+
+        inputs.
+        """
         super().__init__()
         self.weight = weight  # apply weights boolean
         self.iter = range(n - 1)  # iter object
         if weight:
-            self.w = nn.Parameter(
-                -torch.arange(1.0, n) / 2, requires_grad=True
-            )  # layer weights
+            self.w = nn.Parameter(-torch.arange(1.0, n) / 2, requires_grad=True)  # layer weights
 
     def forward(self, x):
+        """Processes input through a customizable weighted sum of `n` inputs, optionally applying learned weights."""
         y = x[0]  # no weight
         if self.weight:
             w = torch.sigmoid(self.w) * 2
@@ -36,10 +37,12 @@ class Sum(nn.Module):
 
 
 class MixConv2d(nn.Module):
-    # Mixed Depth-wise Conv https://arxiv.org/abs/1907.09595
-    def __init__(
-        self, c1, c2, k=(1, 3), s=1, equal_ch=True
-    ):  # ch_in, ch_out, kernel, stride, ch_strategy
+    """Mixed Depth-wise Conv https://arxiv.org/abs/1907.09595."""
+
+    def __init__(self, c1, c2, k=(1, 3), s=1, equal_ch=True):
+        """Initializes MixConv2d with mixed depth-wise convolutional layers, taking input and output channels (c1, c2),
+        kernel sizes (k), stride (s), and channel distribution strategy (equal_ch).
+        """
         super().__init__()
         n = len(k)  # number of convolutions
         if equal_ch:  # equal c_ per group
@@ -51,31 +54,30 @@ class MixConv2d(nn.Module):
             a -= np.roll(a, 1, axis=1)
             a *= np.array(k) ** 2
             a[0] = 1
-            c_ = np.linalg.lstsq(a, b, rcond=None)[
-                0
-            ].round()  # solve for equal weight indices, ax = b
+            c_ = np.linalg.lstsq(a, b, rcond=None)[0].round()  # solve for equal weight indices, ax = b
 
         self.m = nn.ModuleList(
-            [
-                nn.Conv2d(
-                    c1, int(c_), k, s, k // 2, groups=math.gcd(c1, int(c_)), bias=False
-                )
-                for k, c_ in zip(k, c_)
-            ]
+            [nn.Conv2d(c1, int(c_), k, s, k // 2, groups=math.gcd(c1, int(c_)), bias=False) for k, c_ in zip(k, c_)]
         )
         self.bn = nn.BatchNorm2d(c2)
         self.act = nn.SiLU()
 
     def forward(self, x):
+        """Performs forward pass by applying SiLU activation on batch-normalized concatenated convolutional layer
+        outputs.
+        """
         return self.act(self.bn(torch.cat([m(x) for m in self.m], 1)))
 
 
 class Ensemble(nn.ModuleList):
-    # Ensemble of models
+    """Ensemble of models."""
+
     def __init__(self):
+        """Initializes an ensemble of models to be used for aggregated predictions."""
         super().__init__()
 
     def forward(self, x, augment=False, profile=False, visualize=False):
+        """Performs forward pass aggregating outputs from an ensemble of models.."""
         y = [module(x, augment, profile, visualize)[0] for module in self]
         # y = torch.stack(y).max(0)[0]  # max ensemble
         # y = torch.stack(y).mean(0)  # mean ensemble
@@ -84,7 +86,11 @@ class Ensemble(nn.ModuleList):
 
 
 def attempt_load(weights, device=None, inplace=True, fuse=True):
-    # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
+    """
+    Loads and fuses an ensemble or single YOLOv5 model from weights, handling device placement and model adjustments.
+
+    Example inputs: weights=[a,b,c] or a single model weights=[a] or weights=a.
+    """
     from models.yolo import Detect, Model
 
     model = Ensemble()
@@ -98,9 +104,7 @@ def attempt_load(weights, device=None, inplace=True, fuse=True):
         if hasattr(ckpt, "names") and isinstance(ckpt.names, (list, tuple)):
             ckpt.names = dict(enumerate(ckpt.names))  # convert to dict
 
-        model.append(
-            ckpt.fuse().eval() if fuse and hasattr(ckpt, "fuse") else ckpt.eval()
-        )  # model in eval mode
+        model.append(ckpt.fuse().eval() if fuse and hasattr(ckpt, "fuse") else ckpt.eval())  # model in eval mode
 
     # Module updates
     for m in model.modules():
@@ -121,10 +125,6 @@ def attempt_load(weights, device=None, inplace=True, fuse=True):
     print(f"Ensemble created with {weights}\n")
     for k in "names", "nc", "yaml":
         setattr(model, k, getattr(model[0], k))
-    model.stride = model[
-        torch.argmax(torch.tensor([m.stride.max() for m in model])).int()
-    ].stride  # max stride
-    assert all(
-        model[0].nc == m.nc for m in model
-    ), f"Models have different class counts: {[m.nc for m in model]}"
+    model.stride = model[torch.argmax(torch.tensor([m.stride.max() for m in model])).int()].stride  # max stride
+    assert all(model[0].nc == m.nc for m in model), f"Models have different class counts: {[m.nc for m in model]}"
     return model
