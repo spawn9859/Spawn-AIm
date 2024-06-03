@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 # Model files
-*.engine
-*.onnx
+models/*.engine
+models/*.onnx
 
 # C extensions
 *.so
