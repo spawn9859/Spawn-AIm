@@ -1,5 +1,6 @@
 import pygame
 
+# This is for Xbox One controllers!
 
 def initialize_pygame_and_controller():
     pygame.init()
