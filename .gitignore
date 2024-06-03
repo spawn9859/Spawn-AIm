@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Model files
+*.engine
+*.onnx
+
 # C extensions
 *.so
 
