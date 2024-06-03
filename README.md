@@ -2,6 +2,7 @@
 
 # Spawn-Aim
 
+## Has only been tested with Fortnite!
 
 Spawn-Aim is an advanced aimbot tool designed to enhance your gaming experience by providing features such as auto-aim, trigger bot, recoil control, and more. This tool leverages YOLOv5 and YOLOv8 models for object detection and aims to provide a seamless and customizable experience.
 
