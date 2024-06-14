@@ -165,3 +165,8 @@ cython_debug/
 .aider*
 *.onnx
 *.engine
+main.old
+models/newtai.pt
+models/taispawn.pt
+temp.pt
+send_targetsbackup.py
