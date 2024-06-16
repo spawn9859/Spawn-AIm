@@ -11,7 +11,6 @@
     "sensitivity": 14.0,
     "headshot": 40.0,
     "trigger_bot_distance": 8,
-    "confidence": 68.0,
     "recoil_strength": 0,
     "aim_shake_strength": 5,
     "max_move": 100,
@@ -48,13 +47,11 @@
 	"activationKey":"Alt",
 	"autoFire":false,
 	"autoFireActivationDistance":8,
-	"fovCircle":false,
-	"fovCircleRadius":160,
+	"fovToggle":"on",
+	"fovSize":160,
 	"fovCircleRadiusDetectionModifier":1,
 	"aimShakey":false,
 	"aimShakeyStrength":5,
 	"toggleable":false,
-	"gameTitle":"Fortnite",
-	"activation_key_string":"Alt",
-	"quit_key_string":"Q"
+	"gameTitle":"Fortnite"
 }
