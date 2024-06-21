@@ -20,3 +20,8 @@ def get_left_trigger(controller):
     return (
         controller.get_axis(4) + 1
     ) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)
+
+def get_right_trigger(controller):
+    return (
+        controller.get_axis(5) + 1
+    ) / 2  # Normalize to 0 (unpressed) to 1 (fully pressed)

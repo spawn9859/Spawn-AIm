@@ -1,7 +1,8 @@
 import win32api
 import win32con
+import numpy as np
 
-def send_targets(controller, settings, targets, distances, random_x, random_y, get_left_trigger):
+def send_targets(controller, settings, targets, distances, random_x, random_y, get_left_trigger, get_right_trigger):
     """Sends mouse movements based on detected targets and settings.
 
     Args:
@@ -12,9 +13,10 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
         random_x: Random horizontal offset for aim shake.
         random_y: Random vertical offset for aim shake.
         get_left_trigger: Function to get the value of the left trigger from the controller. 
+        get_right_trigger: Function to get the value of the right trigger from the controller.
     """
 
-    if not distances:
+    if distances.size == 0:
         return
 
     # Apply settings
@@ -22,7 +24,8 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
     sensitivity_factor = settings["sensitivity"] / 20 
     
     # Find closest target
-    target_x, target_y = targets[distances.index(min(distances))]
+    min_index = np.argmin(distances)
+    target_x, target_y = targets[min_index]
 
     # Limit target movement speed
     target_x = max(-settings["max_move"], min(target_x, settings["max_move"]))
@@ -34,9 +37,12 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
         (trigger_pressed and settings["toggle"] == "off") or settings["toggle"] == "on"
     )
 
+    # Check for recoil control activation using the right trigger
+    recoil_control_active = settings["recoil"] == "on" and get_right_trigger(controller) > 0.5
+
     if auto_aim_active:
-        # Apply recoil control if enabled and trigger is pressed
-        recoil = int(settings["recoil_strength"]) if settings["recoil"] == "on" and trigger_pressed else 0
+        # Apply recoil control if enabled and right trigger is pressed
+        recoil = int(settings["recoil_strength"]) if recoil_control_active else 0 
 
         # Calculate mouse movement with aim shake
         mouse_move_x = int((target_x + random_x) * sensitivity_factor)

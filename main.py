@@ -25,7 +25,7 @@ from utils.general import non_max_suppression
 from ultralytics import YOLO
 from ultralytics.utils import ops
 import bettercam
-from controller_setup import initialize_pygame_and_controller, get_left_trigger
+from controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
 from send_targets import send_targets
 
 # Define script directory
@@ -52,9 +52,9 @@ LAUNCHER_MODELS = [
     for file in os.listdir(MODELS_PATH) if file.endswith(".pt")
 ]
 
-targets = []
-distances = []
-coordinates = []
+targets = np.empty((0, 2), dtype=np.float32)
+distances = np.empty(0, dtype=np.float32)
+coordinates = np.empty((0, 4), dtype=np.float32)
 
 model, screen, overlay, canvas = None, None, None, None
 random_x, random_y, arduino = 0, 0, None
@@ -67,6 +67,19 @@ def load_configuration(SCRIPT_DIR):
         settings = json.load(json_file)
 
     return key_mapping, settings
+
+def calculate_targets_vectorized(boxes):
+    width_half = settings["width"] / 2
+    height_half = settings["height"] / 2
+    headshot_percent = settings["headshot"] / 100
+    
+    x = ((boxes[:, 0] + boxes[:, 2]) / 2) - width_half
+    y = ((boxes[:, 1] + boxes[:, 3]) / 2) + headshot_percent * (boxes[:, 1] - ((boxes[:, 1] + boxes[:, 3]) / 2)) - height_half
+    
+    targets = np.column_stack((x, y))
+    distances = np.sqrt(np.sum(targets**2, axis=1))
+    
+    return targets, distances
 
 # Load key mapping and user settings from JSON files
 key_mapping, settings = load_configuration(SCRIPT_DIR)
@@ -299,6 +312,8 @@ def button_reload_event():
     """Reloads the YOLO model and updates UI elements based on settings."""
     global screen, overlay
 
+    
+
     # Update settings from UI elements
     settings["yolo_version"] = combobox_yolo_version.get()
     settings["yolo_model"] = combobox_yolo_model.get()
@@ -400,38 +415,27 @@ def update_overlay():
 def update_preview(frame):
     """Updates the preview window with detected objects and aim points."""
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    if distances:
+    if distances.size > 0:
         min_distance_index = np.argmin(distances)
         half_width = settings["width"] // 2
         half_height = settings["height"] // 2
         for i, coord in enumerate(coordinates):
             x_min, y_min, x_max, y_max = map(int, coord)
-            cv2.rectangle(
-                frame,
-                (x_min, y_min),
-                (x_max, y_max),
-                (255, 255, 0) if i == min_distance_index else (0, 0, 255),
-                2,
-            )
+            color = (255, 255, 0) if i == min_distance_index else (0, 0, 255)
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), color, 2)
+        
         for i, target in enumerate(targets):
-            cv2.line(
-                frame,
-                (half_width, half_height),
-                (target[0] + half_width, target[1] + half_height),
-                (255, 255, 0) if i == min_distance_index else (0, 0, 255),
-                4,
-            )
-            cv2.circle(
-                frame,
-                (target[0] + half_width, target[1] + half_height),
-                8,
-                (0, 255, 0),
-                -1,
-            )
+            target_x, target_y = target
+            color = (255, 255, 0) if i == min_distance_index else (0, 0, 255)
+            cv2.line(frame, 
+                     (half_width, half_height),
+                     (int(target_x + half_width), int(target_y + half_height)),
+                     color, 4)
+            cv2.circle(frame,
+                       (int(target_x + half_width), int(target_y + half_height)),
+                       8, (0, 255, 0), -1)
 
-    frame = Image.fromarray(
-        cv2.resize(frame, (240, 240), interpolation=cv2.INTER_NEAREST)
-    )
+    frame = Image.fromarray(cv2.resize(frame, (240, 240), interpolation=cv2.INTER_NEAREST))
     ctkframe = ctk.CTkImage(size=(240, 240), dark_image=frame, light_image=frame)
     image_label_preview.configure(image=ctkframe)
 
@@ -1215,6 +1219,11 @@ def main(**argv):
         np_frame = np.array(screen.get_latest_frame())
         pygame.event.pump()
 
+        # Initialize arrays for each iteration
+        targets = np.empty((0, 2), dtype=np.float32)
+        distances = np.empty(0, dtype=np.float32)
+        coordinates = np.empty((0, 4), dtype=np.float32)
+
         # Convert frame to RGB format if necessary
         if np_frame.shape[2] == 4:
             np_frame = np_frame[:, :, :3]
@@ -1243,22 +1252,14 @@ def main(**argv):
                         boxes[:num_detections] = results.xyxy[0][:, :4].cpu().numpy()
                         confs[:num_detections] = results.xyxy[0][:, 4].cpu().numpy()
                         classes[:num_detections] = results.xyxy[0][:, 5].cpu().numpy()
-                        for i in range(num_detections):
-                            box_result = calculate_targets(
-                                boxes[i, 0], boxes[i, 1], boxes[i, 2], boxes[i, 3]
-                            )
-                            coordinates.append(
-                                (boxes[i, 0], boxes[i, 1], boxes[i, 2], boxes[i, 3])
-                            )
+                        coordinates = boxes[:num_detections]
+                        targets, distances = calculate_targets_vectorized(boxes[:num_detections])
 
-                            # FOV Check
-                            if settings["fov_enabled"] == "on":
-                                if math.sqrt(box_result[0][0] ** 2 + box_result[0][1] ** 2) <= settings["fov_size"]:
-                                    targets.append(box_result[0])
-                                    distances.append(box_result[1])
-                            else:
-                                targets.append(box_result[0])
-                                distances.append(box_result[1])
+                        if settings["fov_enabled"] == "on":
+                            fov_mask = np.sum(targets**2, axis=1) <= settings["fov_size"]**2
+                            targets = targets[fov_mask]
+                            distances = distances[fov_mask]
+                            coordinates = coordinates[fov_mask]
 
                 elif settings["yolo_version"] == "v8":
                     results = model.predict(
@@ -1281,26 +1282,14 @@ def main(**argv):
                                 classes = np.resize(classes, max_detections)
                             # Copy the detection results to the pre-allocated arrays
                             boxes[:num_detections] = result.boxes.xyxy.cpu().numpy()
-                            for i in range(num_detections):
-                                box_result = calculate_targets(
-                                    boxes[i, 0], boxes[i, 1], boxes[i, 2], boxes[i, 3]
-                                )
-                                coordinates.append(
-                                    (
-                                        boxes[i, 0],
-                                        boxes[i, 1],
-                                        boxes[i, 2],
-                                        boxes[i, 3],
-                                    )
-                                )
-                                # FOV Check
-                                if settings["fov_enabled"] == "on":
-                                    if math.sqrt(box_result[0][0] ** 2 + box_result[0][1] ** 2) <= settings["fov_size"]:
-                                        targets.append(box_result[0])
-                                        distances.append(box_result[1])
-                                else:
-                                    targets.append(box_result[0])
-                                    distances.append(box_result[1])
+                            coordinates = boxes[:num_detections]
+                            targets, distances = calculate_targets_vectorized(boxes[:num_detections])
+
+                            if settings["fov_enabled"] == "on":
+                                fov_mask = np.sum(targets**2, axis=1) <= settings["fov_size"]**2
+                                targets = targets[fov_mask]
+                                distances = distances[fov_mask]
+                                coordinates = coordinates[fov_mask]
 
             elif settings["yolo_mode"] == "onnx":
                 if settings["yolo_device"] == "nvidia":
@@ -1357,30 +1346,14 @@ def main(**argv):
                         boxes[:num_detections] = det[:, :4].cpu().numpy()
                         confs[:num_detections] = det[:, 4].cpu().numpy()
                         classes[:num_detections] = det[:, 5].cpu().numpy()
-                        for i in range(num_detections):
-                            if int(classes[i]) == 0:
-                                box_result = calculate_targets(
-                                    boxes[i, 0],
-                                    boxes[i, 1],
-                                    boxes[i, 2],
-                                    boxes[i, 3],
-                                )
-                                coordinates.append(
-                                    (
-                                        boxes[i, 0],
-                                        boxes[i, 1],
-                                        boxes[i, 2],
-                                        boxes[i, 3],
-                                    )
-                                )
-                                # FOV Check
-                                if settings["fov_enabled"] == "on":
-                                    if math.sqrt(box_result[0][0] ** 2 + box_result[0][1] ** 2) <= settings["fov_size"]:
-                                        targets.append(box_result[0])
-                                        distances.append(box_result[1])
-                                else:
-                                    targets.append(box_result[0])
-                                    distances.append(box_result[1])
+                        coordinates = boxes[:num_detections]
+                        targets, distances = calculate_targets_vectorized(boxes[:num_detections])
+
+                        if settings["fov_enabled"] == "on":
+                            fov_mask = np.sum(targets**2, axis=1) <= settings["fov_size"]**2
+                            targets = targets[fov_mask]
+                            distances = distances[fov_mask]
+                            coordinates = coordinates[fov_mask]
             # Send aim assist commands based on detected targets
             send_targets(
                 controller,
@@ -1390,6 +1363,7 @@ def main(**argv):
                 random_x,
                 random_y,
                 get_left_trigger,
+                get_right_trigger,
             )
 
         # Update preview window if enabled
@@ -1424,10 +1398,10 @@ def main(**argv):
             screen.release()
             quit()
 
-        # Clear target lists
-        targets.clear()
-        distances.clear()
-        coordinates.clear()
+        # Clear arrays efficiently
+        targets = targets[:0]
+        distances = distances[:0] 
+        coordinates = coordinates[:0]
 
 
 if __name__ == "__main__":
