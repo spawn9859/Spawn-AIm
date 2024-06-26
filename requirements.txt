@@ -9,3 +9,4 @@ pyserial
 pygame
 openvino-dev
 colorama
+numba
