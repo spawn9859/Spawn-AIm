@@ -242,6 +242,7 @@ def main(**argv):
     while True:
         # Update UI and get the latest frame from screen capture
         main_window.root.update()
+        main_window.update_fov_overlay()  # Add this line
         frame_count += 1
         np_frame = preprocess_frame(np.array(screen.get_latest_frame()))
         pygame.event.pump()

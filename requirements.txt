@@ -1,12 +1,49 @@
-ultralytics
-pywin32
-bettercam
-customtkinter
-onnx
-onnxsim
-keyboard
-pyserial
-pygame
-openvino-dev
-colorama
-numba
+ultralytics==8.0.145
+pywin32==306
+bettercam==0.1.5
+customtkinter==5.2.0
+onnx==1.14.0
+onnxsim==0.4.33
+keyboard==0.13.5
+pyserial==3.5
+pygame==2.5.2
+openvino-dev==2023.0.1
+colorama==0.4.6
+numba==0.57.1
+numpy==1.24.3
+opencv-python==4.8.0.76
+Pillow==10.0.0
+torch==2.0.1
+torchvision==0.15.2
+torchaudio==2.0.2
+```
+
+This `requirements.txt` file includes:
+
+1. `ultralytics` for YOLO models
+2. `pywin32` for Windows-specific functionality
+3. `bettercam` for screen capture
+4. `customtkinter` for the GUI
+5. `onnx` and `onnxsim` for ONNX model support
+6. `keyboard` for key event handling
+7. `pyserial` for Arduino communication (if used)
+8. `pygame` for controller support
+9. `openvino-dev` for potential OpenVINO optimizations
+10. `colorama` for colored console output
+11. `numba` for performance optimization
+12. `numpy` for numerical operations
+13. `opencv-python` for image processing
+14. `Pillow` for image handling in Python
+15. `torch`, `torchvision`, and `torchaudio` for PyTorch support
+
+To use this file:
+
+1. Save it as `requirements.txt` in your project's root directory.
+2. Users can then install all dependencies by running:
+   ```
+   pip install -r requirements.txt
+   ```
+
+Note: The versions specified are based on the latest stable releases as of my last update. You may want to adjust these versions based on your specific needs or if you're using different versions that you've tested with your project.
+
+Also, keep in mind that `torch`, `torchvision`, and `torchaudio` installations might need to be adjusted based on the user's CUDA version and GPU. You might want to add a note in your README about this, suggesting users visit the official PyTorch website to get the correct installation command for their system.

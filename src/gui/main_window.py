@@ -3,6 +3,9 @@ import cv2
 from PIL import Image, ImageTk, ImageDraw
 from .components import create_checkboxes, create_sliders, create_comboboxes, create_buttons, create_labels
 import numpy as np
+import win32gui
+import win32con
+import win32api
 
 GREEN_COLOR = "#15AC8b"
 GREY_COLOR = "#808080"
@@ -15,6 +18,7 @@ class MainWindow:
         self.root.resizable(width=False, height=False)
         
         self.config_manager = config_manager
+        self.fov_overlay = None
         self.setup_ui()
 
     def setup_ui(self):
@@ -23,6 +27,19 @@ class MainWindow:
         self.comboboxes = create_comboboxes(self.root, self.config_manager, self.config_manager.update_setting)
         self.buttons = create_buttons(self.root, self)
         self.labels = create_labels(self.root)
+        self.fov_visible = ctk.StringVar(value="off")
+        self.fov_checkbox = ctk.CTkCheckBox(
+            self.root,
+            text="Show FOV",
+            variable=self.fov_visible,
+            onvalue="on",
+            offvalue="off",
+            command=self.toggle_fov_visibility,
+            fg_color="#00FF00",
+            hover_color="#0F0")
+        self.fov_checkbox.place(x=320, y=280)
+
+          
 
         # Create preview image
         self.preview_image = ctk.CTkImage(
@@ -47,9 +64,116 @@ class MainWindow:
         )
         self.fov_checkbox.place(x=320, y=280)  # Adjust position as needed
 
+        self.enable_fov_checkbox = ctk.CTkCheckBox(
+            self.root,
+            text="Enable FOV",
+            variable=ctk.StringVar(value=self.config_manager.get_setting("fov_enabled")),
+            onvalue="on",
+            offvalue="off",
+            command=self.toggle_fov_enabled,
+            fg_color="#00FF00",
+            hover_color="#0F0"
+        )
+        self.enable_fov_checkbox.place(x=10, y=510)
+
+        # Show FOV checkbox
+        self.show_fov_checkbox = ctk.CTkCheckBox(
+            self.root,
+            text="Show FOV",
+            variable=ctk.StringVar(value=self.config_manager.get_setting("show_fov")),
+        onvalue="on",
+        offvalue="off",
+        command=self.toggle_show_fov,
+        fg_color="#00FF00",
+        hover_color="#0F0"
+        )
+        self.show_fov_checkbox.place(x=320, y=280)
+
+    def toggle_fov_enabled(self):
+        value = "on" if self.enable_fov_checkbox.get() == "on" else "off"
+        self.config_manager.update_setting("fov_enabled", value)
+        if value == "on":
+            self.create_fov_overlay()
+        else:
+            self.destroy_fov_overlay()
+
+    def toggle_show_fov(self):
+        value = "on" if self.show_fov_checkbox.get() == "on" else "off"
+        self.config_manager.update_setting("show_fov", value)
+        self.update_fov_overlay()
+
     def toggle_fov_visibility(self):
-        # This method will be called when the FOV checkbox is toggled
-        pass  # The visibility is controlled by the checkbox state, so we don't need to do anything here
+        if self.fov_visible.get() == "on":
+            self.create_fov_overlay()
+        else:
+            self.destroy_fov_overlay()
+
+    def create_fov_overlay(self):
+        if self.fov_overlay is None:
+            # Get the game window position and size
+            game_window = win32gui.FindWindow(None, "Your Game Window Title")  # Replace with actual game window title
+            if not game_window:
+                print("Game window not found")
+                return
+
+            left, top, right, bottom = win32gui.GetClientRect(game_window)
+            left, top = win32gui.ClientToScreen(game_window, (left, top))
+            
+            width = right - left
+            height = bottom - top
+
+            self.fov_overlay = ctk.CTkToplevel(self.root)
+            self.fov_overlay.geometry(f"{width}x{height}+{left}+{top}")
+            self.fov_overlay.overrideredirect(True)
+            self.fov_overlay.attributes("-topmost", True)
+            self.fov_overlay.attributes("-transparentcolor", "black")
+            self.fov_overlay.configure(bg="black")
+
+            self.fov_canvas = ctk.CTkCanvas(self.fov_overlay, width=width, height=height, 
+                                            highlightthickness=0, bg="black")
+            self.fov_canvas.pack()
+
+            # Make the window click-through
+            hwnd = self.fov_overlay.winfo_id()
+            styles = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
+            styles = styles | win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
+            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, styles)
+            win32gui.SetLayeredWindowAttributes(hwnd, 0, 255, win32con.LWA_COLORKEY)
+
+        self.update_fov_overlay()
+
+    def destroy_fov_overlay(self):
+        if self.fov_overlay:
+            self.fov_overlay.destroy()
+            self.fov_overlay = None
+
+    def update_fov_overlay(self):
+        if self.fov_overlay and self.config_manager.get_setting("show_fov") == "on":
+            self.fov_canvas.delete("all")
+            
+            # Get current screen resolution
+            screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+            screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
+
+            # Calculate center based on screen resolution
+            center_x = screen_width // 2
+            center_y = screen_height // 2
+
+            fov_size = self.config_manager.get_setting("fov_size")
+
+            # Convert screen coordinates to canvas coordinates
+            canvas_width = self.fov_canvas.winfo_width()
+            canvas_height = self.fov_canvas.winfo_height()
+            canvas_center_x = canvas_width // 2
+            canvas_center_y = canvas_height // 2
+
+            # Draw the circle
+            self.fov_canvas.create_oval(
+                canvas_center_x - fov_size, canvas_center_y - fov_size,
+                canvas_center_x + fov_size, canvas_center_y + fov_size,
+                outline="red", width=2
+            )
+
 
     def update_preview(self, frame, coordinates, targets, distances):
         if self.config_manager.get_setting("preview") == "on":

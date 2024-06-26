@@ -9,6 +9,7 @@ class ConfigManager:
         self.settings = self.load_settings()
         self.key_mapping = self.load_key_mapping()
         self.settings["show_fov"] = "off"
+        
 
     def load_settings(self):
         with open(self.config_path, "r") as f:
