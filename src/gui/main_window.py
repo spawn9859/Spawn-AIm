@@ -1,4 +1,5 @@
 import customtkinter as ctk
+import sv_ttk
 import cv2
 from PIL import Image, ImageTk, ImageDraw
 from .components import create_checkboxes, create_sliders, create_comboboxes, create_buttons, create_labels
@@ -6,134 +7,291 @@ import numpy as np
 import win32gui
 import win32con
 import win32api
-
-GREEN_COLOR = "#15AC8b"
-GREY_COLOR = "#808080"
+import threading
+import customtkinter as ctk
+import sv_ttk
+import cv2
+from PIL import Image, ImageTk, ImageDraw
+from .components import create_checkboxes, create_sliders, create_comboboxes, create_buttons, create_labels
+import numpy as np
+import win32gui
+import win32con
+import win32api
+import threading
+import queue
+import time
 
 class MainWindow:
     def __init__(self, config_manager):
         self.root = ctk.CTk()
         self.root.title("Spawn-Aim")
-        self.root.geometry("600x850+40+40")
+        self.root.geometry("800x900")
         self.root.resizable(width=False, height=False)
         
         self.config_manager = config_manager
         self.fov_overlay = None
+        
+        sv_ttk.set_theme("dark")
+        
+        self.preview_label = None
         self.setup_ui()
+        
+        self.running = True
+        self.root.after(100, self.periodic_update)  # Start periodic updates
+
+    def periodic_update(self):
+        if self.running:
+            self.update_fov_overlay()
+            # Add any other update operations here
+            self.root.after(100, self.periodic_update)  # Schedule next update
 
     def setup_ui(self):
-        self.checkboxes = create_checkboxes(self.root, self.config_manager, self.update_setting)
-        self.sliders = create_sliders(self.root, self.config_manager, self.config_manager.update_setting)
-        self.comboboxes = create_comboboxes(self.root, self.config_manager, self.config_manager.update_setting)
-        self.buttons = create_buttons(self.root, self)
-        self.labels = create_labels(self.root)
-        self.fov_visible = ctk.StringVar(value="off")
+        # Create main frame
+        self.main_frame = ctk.CTkFrame(self.root)
+        self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Create tabs
+        self.tabview = ctk.CTkTabview(self.main_frame)
+        self.tabview.pack(fill="both", expand=True)
+
+        self.tab_main = self.tabview.add("Main")
+        self.tab_settings = self.tabview.add("Settings")
+        self.tab_advanced = self.tabview.add("Advanced")
+
+        # Main tab
+        self.setup_main_tab()
+
+        # Settings tab
+        self.setup_settings_tab()
+
+        # Advanced tab
+        self.setup_advanced_tab()
+
+        # Theme toggle button
+        self.theme_button = ctk.CTkButton(self.root, text="Toggle Theme", command=self.toggle_theme)
+        self.theme_button.pack(pady=10)
+
+    def _process_queue(self):
+        try:
+            task = self.update_queue.get_nowait()
+            task()
+        except queue.Empty:
+            pass
+        if self.running:
+            self.root.after(10, self._process_queue)
+
+    def safe_update(self):
+        try:
+            self.update_fov_overlay()
+            # Add any other update operations here
+        except Exception as e:
+            print(f"Error in safe_update: {e}")
+
+    def run(self):
+        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.root.mainloop()
+
+    def on_closing(self):
+        self.running = False
+        self.root.destroy()
+
+    def _update_preview_gui(self, photo):
+        self.preview_label.configure(image=photo)
+        self.preview_label.image = photo
+
+    def setup_main_tab(self):
+        main_frame = ctk.CTkFrame(self.tab_main)
+        main_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Left column
+        left_column = ctk.CTkFrame(main_frame)
+        left_column.pack(side="left", fill="both", expand=True, padx=(0, 5))
+
+        # Checkboxes
+        checkbox_frame = ctk.CTkFrame(left_column)
+        checkbox_frame.pack(fill="x", pady=10)
+        self.checkboxes = create_checkboxes(checkbox_frame, self.config_manager, self.update_setting)
+
+        # FPS Label
+        self.fps_label = create_labels(left_column)['fps']
+        self.fps_label.pack(pady=5)
+
+        # FOV controls
+        fov_frame = ctk.CTkFrame(left_column)
+        fov_frame.pack(fill="x", pady=10)
+        
+        self.fov_visible = ctk.StringVar(value=self.config_manager.get_setting("show_fov"))
         self.fov_checkbox = ctk.CTkCheckBox(
-            self.root,
+            fov_frame,
             text="Show FOV",
             variable=self.fov_visible,
             onvalue="on",
             offvalue="off",
             command=self.toggle_fov_visibility,
-            fg_color="#00FF00",
-            hover_color="#0F0")
-        self.fov_checkbox.place(x=320, y=280)
-
-          
-
-        # Create preview image
-        self.preview_image = ctk.CTkImage(
-            light_image=Image.open("preview.png"),
-            dark_image=Image.open("preview.png"),
-            size=(240, 240)
         )
-        self.preview_label = ctk.CTkLabel(self.root, image=self.preview_image, text="")
-        self.preview_label.place(x=240, y=40)
+        self.fov_checkbox.pack(side="left", padx=5)
 
-        # Add FOV toggle checkbox
-        self.fov_visible = ctk.StringVar(value="off")
-        self.fov_checkbox = ctk.CTkCheckBox(
-            self.root,
-            text="Show FOV",
-            variable=self.fov_visible,
-            onvalue="on",
-            offvalue="off",
-            command=self.toggle_fov_visibility,
-            fg_color=GREEN_COLOR,
-            hover_color="#0F0"
-        )
-        self.fov_checkbox.place(x=320, y=280)  # Adjust position as needed
-
-        self.enable_fov_checkbox = ctk.CTkCheckBox(
-            self.root,
+        self.enable_fov = ctk.CTkCheckBox(
+            fov_frame,
             text="Enable FOV",
             variable=ctk.StringVar(value=self.config_manager.get_setting("fov_enabled")),
-            onvalue="on",
-            offvalue="off",
             command=self.toggle_fov_enabled,
-            fg_color="#00FF00",
-            hover_color="#0F0"
         )
-        self.enable_fov_checkbox.place(x=10, y=510)
+        self.enable_fov.pack(side="left", padx=5)
 
-        # Show FOV checkbox
-        self.show_fov_checkbox = ctk.CTkCheckBox(
-            self.root,
-            text="Show FOV",
-            variable=ctk.StringVar(value=self.config_manager.get_setting("show_fov")),
-        onvalue="on",
-        offvalue="off",
-        command=self.toggle_show_fov,
-        fg_color="#00FF00",
-        hover_color="#0F0"
+        # Sliders
+        slider_frame = ctk.CTkFrame(left_column)
+        slider_frame.pack(fill="x", pady=10)
+        
+        self.sliders = create_sliders(slider_frame, self.config_manager, self.update_setting)
+        
+        # Keep all sliders visible
+        for slider in self.sliders.values():
+            slider.master.pack(fill="x", pady=5)
+
+        # Key bindings
+        key_frame = ctk.CTkFrame(left_column)
+        key_frame.pack(fill="x", pady=10)
+        
+        activation_key_label = ctk.CTkLabel(key_frame, text=f"Activation key: {self.config_manager.get_setting('activation_key_string')}")
+        activation_key_label.pack(side="left", padx=5)
+        
+        quit_key_label = ctk.CTkLabel(key_frame, text=f"Quit key: {self.config_manager.get_setting('quit_key_string')}")
+        quit_key_label.pack(side="left", padx=5)
+
+        # Right column
+        right_column = ctk.CTkFrame(main_frame)
+        right_column.pack(side="right", fill="both", expand=True, padx=(5, 0))
+
+        # Preview image
+        self.preview_image = ctk.CTkImage(
+            light_image=Image.new("RGB", (320, 320), color="gray"),
+            dark_image=Image.new("RGB", (320, 320), color="gray"),
+            size=(320, 320)
         )
-        self.show_fov_checkbox.place(x=320, y=280)
+        self.preview_label = ctk.CTkLabel(right_column, image=self.preview_image, text="")
+        self.preview_label.pack(pady=10)
+        
+        if self.config_manager.get_setting("preview") != "on":
+            self.preview_label.pack_forget()
 
-    def toggle_fov_enabled(self):
-        value = "on" if self.enable_fov_checkbox.get() == "on" else "off"
-        self.config_manager.update_setting("fov_enabled", value)
+    def setup_settings_tab(self):
+        settings_frame = ctk.CTkFrame(self.tab_settings)
+        settings_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        
+        # Comboboxes
+        combo_frame = ctk.CTkFrame(settings_frame)
+        combo_frame.pack(fill="x", pady=10)
+        self.comboboxes = create_comboboxes(combo_frame, self.config_manager, self.config_manager.update_setting)
+
+    def setup_advanced_tab(self):
+        advanced_frame = ctk.CTkFrame(self.tab_advanced)
+        advanced_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Buttons
+        self.buttons = create_buttons(advanced_frame, self)
+
+    def toggle_theme(self):
+        current_theme = sv_ttk.get_theme()
+        if current_theme == "dark":
+            sv_ttk.use_light_theme()
+        else:
+            sv_ttk.use_dark_theme()
+
+    def update_setting(self, key, value):
+        self.config_manager.update_setting(key, value)
+        if key == "preview":
+            self.toggle_preview(value)
+
+    def toggle_preview(self, value):
+        if value == "on":
+            self.preview_label.pack(pady=10)
+        else:
+            self.preview_label.pack_forget()
+
+    def update_preview(self, frame, coordinates, targets, distances):
+        if self.config_manager.get_setting("preview") == "on":
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame = cv2.resize(frame, (240, 240))
+            image = Image.fromarray(frame)
+            draw = ImageDraw.Draw(image)
+            
+            # Draw bounding boxes
+            for coord in coordinates:
+                x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
+                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
+            
+            # Draw aim lines
+            center_x, center_y = 120, 120
+            if len(targets) > 0:
+                min_distance_index = np.argmin(distances)
+                for i, (target_x, target_y) in enumerate(targets):
+                    color = "yellow" if i == min_distance_index else "blue"
+                    scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
+                    scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
+                    draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
+                    draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
+
+            # Draw FOV circle if enabled
+            if self.config_manager.get_setting("show_fov") == "on":
+                fov_size = self.config_manager.get_setting("fov_size")
+                scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
+                draw.ellipse(
+                    [center_x - scaled_fov_size, center_y - scaled_fov_size,
+                     center_x + scaled_fov_size, center_y + scaled_fov_size],
+                    outline="red", width=2
+                )
+
+            photo = ImageTk.PhotoImage(image=image)
+            self.preview_label.configure(image=photo)
+            self.preview_label.image = photo
+
+    def update_fps_label(self, fps):
+        self.root.after(0, self._update_fps_label_gui, fps)
+
+    def _update_fps_label_gui(self, fps):
+        self.fps_label.configure(text=f"FPS: {round(fps)}")
+
+    def toggle_fov_visibility(self):
+        value = self.fov_visible.get()
+        self.config_manager.update_setting("show_fov", value)
         if value == "on":
             self.create_fov_overlay()
         else:
             self.destroy_fov_overlay()
 
-    def toggle_show_fov(self):
-        value = "on" if self.show_fov_checkbox.get() == "on" else "off"
-        self.config_manager.update_setting("show_fov", value)
-        self.update_fov_overlay()
-
-    def toggle_fov_visibility(self):
-        if self.fov_visible.get() == "on":
+    def toggle_fov_enabled(self):
+        current_value = self.config_manager.get_setting("fov_enabled")
+        new_value = "off" if current_value == "on" else "on"
+        self.config_manager.update_setting("fov_enabled", new_value)
+        
+        # Update the checkbox state
+        self.enable_fov.configure(variable=ctk.StringVar(value=new_value))
+        
+        # Update the FOV visibility based on the new state
+        if new_value == "on":
             self.create_fov_overlay()
         else:
             self.destroy_fov_overlay()
+        
+        print(f"FOV Enabled: {new_value}")  # Debug print
 
     def create_fov_overlay(self):
         if self.fov_overlay is None:
-            # Get the game window position and size
-            game_window = win32gui.FindWindow(None, "Your Game Window Title")  # Replace with actual game window title
-            if not game_window:
-                print("Game window not found")
-                return
-
-            left, top, right, bottom = win32gui.GetClientRect(game_window)
-            left, top = win32gui.ClientToScreen(game_window, (left, top))
-            
-            width = right - left
-            height = bottom - top
+            screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
+            screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
             self.fov_overlay = ctk.CTkToplevel(self.root)
-            self.fov_overlay.geometry(f"{width}x{height}+{left}+{top}")
+            self.fov_overlay.geometry(f"{screen_width}x{screen_height}+0+0")
             self.fov_overlay.overrideredirect(True)
             self.fov_overlay.attributes("-topmost", True)
             self.fov_overlay.attributes("-transparentcolor", "black")
             self.fov_overlay.configure(bg="black")
 
-            self.fov_canvas = ctk.CTkCanvas(self.fov_overlay, width=width, height=height, 
+            self.fov_canvas = ctk.CTkCanvas(self.fov_overlay, width=screen_width, height=screen_height, 
                                             highlightthickness=0, bg="black")
             self.fov_canvas.pack()
 
-            # Make the window click-through
             hwnd = self.fov_overlay.winfo_id()
             styles = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
             styles = styles | win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
@@ -151,125 +309,31 @@ class MainWindow:
         if self.fov_overlay and self.config_manager.get_setting("show_fov") == "on":
             self.fov_canvas.delete("all")
             
-            # Get current screen resolution
             screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
             screen_height = win32api.GetSystemMetrics(win32con.SM_CYSCREEN)
 
-            # Calculate center based on screen resolution
             center_x = screen_width // 2
             center_y = screen_height // 2
 
             fov_size = self.config_manager.get_setting("fov_size")
 
-            # Convert screen coordinates to canvas coordinates
-            canvas_width = self.fov_canvas.winfo_width()
-            canvas_height = self.fov_canvas.winfo_height()
-            canvas_center_x = canvas_width // 2
-            canvas_center_y = canvas_height // 2
+            stipple_pattern = "gray75"
 
-            # Draw the circle
             self.fov_canvas.create_oval(
-                canvas_center_x - fov_size, canvas_center_y - fov_size,
-                canvas_center_x + fov_size, canvas_center_y + fov_size,
-                outline="red", width=2
+                center_x - fov_size, center_y - fov_size,
+                center_x + fov_size, center_y + fov_size,
+                outline="red", width=2, stipple=stipple_pattern
             )
 
-
-    def update_preview(self, frame, coordinates, targets, distances):
-        if self.config_manager.get_setting("preview") == "on":
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = cv2.resize(frame, (240, 240))
-            image = Image.fromarray(frame)
-            draw = ImageDraw.Draw(image)
-            
-            # Draw bounding boxes
-            for coord in coordinates:
-                x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
-                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-            
-            # Draw aim lines
-            center_x, center_y = 120, 120  # Center of the preview image
-            if len(targets) > 0:
-                min_distance_index = np.argmin(distances)
-                for i, (target_x, target_y) in enumerate(targets):
-                    color = "yellow" if i == min_distance_index else "blue"
-                    scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
-                    scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
-                    draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
-                    draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
-
-            # Draw FOV circle if enabled
-            if self.fov_visible.get() == "on" and self.config_manager.get_setting("fov_enabled") == "on":
-                fov_size = self.config_manager.get_setting("fov_size")
-                scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
-                draw.ellipse(
-                    [center_x - scaled_fov_size, center_y - scaled_fov_size,
-                     center_x + scaled_fov_size, center_y + scaled_fov_size],
-                    outline="red", width=2
-                )
-
-            photo = ImageTk.PhotoImage(image=image)
-            self.preview_label.configure(image=photo)
-            self.preview_label.image = photo
-
-    def update_setting(self, key, value):
-        self.config_manager.update_setting(key, value)
-        if key == "preview":
-            self.toggle_preview(value)
-
-    def toggle_preview(self, value):
-        if value == "on":
-            self.preview_label.place(x=240, y=40)
-        else:
-            self.preview_label.place_forget()
-
-    def update_fps_label(self, fps):
-        self.labels['fps'].configure(text=f"Fps: {round(fps)}")
-
-    
-
-    def toggle_overlay(self):
-        import win32gui, win32con
-        if self.overlay is None:
-            self.overlay = ctk.CTkToplevel(self.root)
-            self.overlay.geometry(f"{self.settings['width']}x{self.settings['height']}+{int(self.root.winfo_screenwidth()/2 - self.settings['width']/2)}+{int(self.root.winfo_screenheight()/2 - self.settings['height']/2)}")
-            self.overlay.overrideredirect(True)
-            self.overlay.attributes("-topmost", True)
-            self.overlay.configure(bg="#000000")
-            self.overlay.attributes("-alpha", 0.6)
-            
-            self.canvas = ctk.CTkCanvas(self.overlay, width=self.settings['width'], height=self.settings['height'], highlightthickness=0)
-            self.canvas.pack()
-
-            # Make the window click-through
-            hwnd = self.overlay.winfo_id()
-            styles = win32gui.GetWindowLong(hwnd, win32con.GWL_EXSTYLE)
-            styles = styles | win32con.WS_EX_LAYERED | win32con.WS_EX_TRANSPARENT
-            win32gui.SetWindowLong(hwnd, win32con.GWL_EXSTYLE, styles)
-            win32gui.SetLayeredWindowAttributes(hwnd, 0, 255, win32con.LWA_ALPHA)
-        else:
-            self.overlay.destroy()
-            self.overlay = None
-            self.canvas = None
-
-    def update_overlay(self, coordinates):
-        if self.overlay and self.canvas:
-            self.canvas.delete("all")
-            for coord in coordinates:
-                x1, y1, x2, y2 = map(int, coord)
-                self.canvas.create_rectangle(x1, y1, x2, y2, outline="red", width=2)
-
-    def toggle_auto_aim(self):
-        self.checkboxes['auto_aim'].toggle()
-
     def reload_model(self):
-        # This should call the load_model function from main.py
-        # You might need to pass this function as a callback when creating the MainWindow
-        pass
+        # Implement model reloading logic here
+        print("Reloading model...")
+        # You might want to call a method from your config_manager or another appropriate class to reload the model
 
     def show_keybindings(self):
-        # Implementation for showing keybindings window
-        pass
+        # Implement keybindings window logic here
+        print("Showing keybindings...")
+        # You might want to create a new window to display keybindings
 
     def run(self):
         self.root.mainloop()
