@@ -179,7 +179,7 @@ def main(**argv):
     config_manager.update_setting("sensitivity", launcher_settings["movementAmp"] * 100)
     config_manager.update_setting("headshot", launcher_settings["headshotDistanceModifier"] * 100 if launcher_settings["headshotMode"] else 40)
     config_manager.update_setting("trigger_bot_distance", launcher_settings["autoFireActivationDistance"])
-    config_manager.update_setting("confidence", launcher_settings["confidence"] * 100)
+    config_manager.update_setting("confidence", launcher_settings["confidence"])
     config_manager.update_setting("recoil_strength", 0)
     config_manager.update_setting("aim_shake_strength", launcher_settings["aimShakeyStrength"])
     config_manager.update_setting("max_move", 100)

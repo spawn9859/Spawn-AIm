@@ -8,16 +8,6 @@ import win32gui
 import win32con
 import win32api
 import threading
-import customtkinter as ctk
-import sv_ttk
-import cv2
-from PIL import Image, ImageTk, ImageDraw
-from .components import create_checkboxes, create_sliders, create_comboboxes, create_buttons, create_labels
-import numpy as np
-import win32gui
-import win32con
-import win32api
-import threading
 import queue
 import time
 
@@ -71,34 +61,6 @@ class MainWindow:
         self.theme_button = ctk.CTkButton(self.root, text="Toggle Theme", command=self.toggle_theme)
         self.theme_button.pack(pady=10)
 
-    def _process_queue(self):
-        try:
-            task = self.update_queue.get_nowait()
-            task()
-        except queue.Empty:
-            pass
-        if self.running:
-            self.root.after(10, self._process_queue)
-
-    def safe_update(self):
-        try:
-            self.update_fov_overlay()
-            # Add any other update operations here
-        except Exception as e:
-            print(f"Error in safe_update: {e}")
-
-    def run(self):
-        self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.root.mainloop()
-
-    def on_closing(self):
-        self.running = False
-        self.root.destroy()
-
-    def _update_preview_gui(self, photo):
-        self.preview_label.configure(image=photo)
-        self.preview_label.image = photo
-
     def setup_main_tab(self):
         main_frame = ctk.CTkFrame(self.tab_main)
         main_frame.pack(fill="both", expand=True, padx=10, pady=10)
@@ -139,15 +101,19 @@ class MainWindow:
         )
         self.enable_fov.pack(side="left", padx=5)
 
-        # Sliders
-        slider_frame = ctk.CTkFrame(left_column)
-        slider_frame.pack(fill="x", pady=10)
+        # Main sliders
+        main_slider_frame = ctk.CTkFrame(left_column)
+        main_slider_frame.pack(fill="x", pady=10)
         
-        self.sliders = create_sliders(slider_frame, self.config_manager, self.update_setting)
+        main_slider_configs = [
+            ("sensitivity", "Sensitivity", 0, 100),
+            ("confidence", "Confidence threshold", 0, 100),
+            ("headshot", "Headshot offset", 0, 100),
+            ("trigger_bot_distance", "Trigger bot distance", 0, 100),
+            ("fov_size", "FOV Size", 0, 200),
+        ]
         
-        # Keep all sliders visible
-        for slider in self.sliders.values():
-            slider.master.pack(fill="x", pady=5)
+        self.main_sliders = create_sliders(main_slider_frame, self.config_manager, self.update_setting, main_slider_configs)
 
         # Key bindings
         key_frame = ctk.CTkFrame(left_column)
@@ -179,6 +145,21 @@ class MainWindow:
         settings_frame = ctk.CTkFrame(self.tab_settings)
         settings_frame.pack(fill="both", expand=True, padx=10, pady=10)
         
+        # Additional sliders
+        additional_slider_frame = ctk.CTkFrame(settings_frame)
+        additional_slider_frame.pack(fill="x", pady=10)
+        
+        additional_slider_configs = [
+            ("smoothing_factor", "Smoothing factor", 0, 100),
+            ("recoil_strength", "Recoil control strength", 0, 100),
+            ("aim_shake_strength", "Aim shake strength", 0, 100),
+            ("max_move", "Max move speed", 0, 100),
+            ("mask_width", "Mask width", 0, 640),
+            ("mask_height", "Mask height", 0, 640),
+        ]
+        
+        self.additional_sliders = create_sliders(additional_slider_frame, self.config_manager, self.update_setting, additional_slider_configs)
+
         # Comboboxes
         combo_frame = ctk.CTkFrame(settings_frame)
         combo_frame.pack(fill="x", pady=10)

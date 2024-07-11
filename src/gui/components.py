@@ -29,21 +29,24 @@ def create_checkboxes(root, config_manager, update_callback):
 
     return checkboxes
 
-def create_sliders(root, config_manager, update_callback):
+# In components.py
+
+def create_sliders(root, config_manager, update_callback, slider_configs=None):
     sliders = {}
-    slider_configs = [
-        ("sensitivity", "Sensitivity", 0, 100),
-        ("smoothing_factor", "Smoothing factor", 0, 100),
-        ("confidence", "Confidence threshold", 0, 100),
-        ("headshot", "Headshot offset", 0, 100),
-        ("trigger_bot_distance", "Trigger bot distance", 0, 100),
-        ("recoil_strength", "Recoil control strength", 0, 100),
-        ("aim_shake_strength", "Aim shake strength", 0, 100),
-        ("max_move", "Max move speed", 0, 100),
-        ("mask_width", "Mask width", 0, 640),
-        ("mask_height", "Mask height", 0, 640),
-        ("fov_size", "FOV Size", 0, 200),
-    ]
+    if slider_configs is None:
+        slider_configs = [
+            ("sensitivity", "Sensitivity", 0, 100),
+            ("smoothing_factor", "Smoothing factor", 0, 100),
+            ("confidence", "Confidence threshold", 0, 100),
+            ("headshot", "Headshot offset", 0, 100),
+            ("trigger_bot_distance", "Trigger bot distance", 0, 100),
+            ("recoil_strength", "Recoil control strength", 0, 100),
+            ("aim_shake_strength", "Aim shake strength", 0, 100),
+            ("max_move", "Max move speed", 0, 100),
+            ("mask_width", "Mask width", 0, 640),
+            ("mask_height", "Mask height", 0, 640),
+            ("fov_size", "FOV Size", 0, 200),
+        ]
 
     for i, (key, text, from_, to) in enumerate(slider_configs):
         frame = ctk.CTkFrame(root)
@@ -54,7 +57,7 @@ def create_sliders(root, config_manager, update_callback):
             current_value = (from_ + to) // 2
             config_manager.update_setting(key, current_value)
         
-        label = ctk.CTkLabel(frame, text=f"{text}: {current_value}")
+        label = ctk.CTkLabel(frame, text=f"{text}: {current_value:.1f}")
         label.pack(side="left")
         
         slider = ctk.CTkSlider(
@@ -70,8 +73,9 @@ def create_sliders(root, config_manager, update_callback):
     return sliders
 
 def slider_event(value, key, label, text, update_callback):
-    label.configure(text=f"{text}: {round(float(value), 2)}")
-    update_callback(key, float(value))
+    rounded_value = round(float(value), 1)
+    label.configure(text=f"{text}: {rounded_value:.1f}")
+    update_callback(key, rounded_value)
 
 def create_comboboxes(root, config_manager, update_callback):
     comboboxes = {}

@@ -3,7 +3,7 @@ import os
 
 class ConfigManager:
     def __init__(self, settings_profile):
-        self.script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        self.script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.config_path = os.path.join(self.script_dir, "configuration", f"{settings_profile.lower()}.json")
         self.key_mapping_path = os.path.join(self.script_dir, "configuration", "key_mapping.json")
         self.settings = self.load_settings()
@@ -59,7 +59,6 @@ class ConfigManager:
             if key not in self.settings or not isinstance(self.settings[key], type(default_value)):
                 self.settings[key] = default_value
         
-        self.save_settings()
 
     def load_key_mapping(self):
         with open(self.key_mapping_path, "r") as f:
