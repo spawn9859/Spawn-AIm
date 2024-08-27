@@ -12,14 +12,13 @@ import serial
 import onnxruntime as ort
 import serial.tools.list_ports
 from colorama import Fore, Style
-from multiprocessing import Pool, cpu_count
 import win32api
 from utils.general import non_max_suppression
 from ultralytics import YOLO
 from ultralytics.utils import ops
-import bettercam
+import mss
 from controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
-from send_targets import send_targets
+from core.send_targets import send_targets
 from gui.main_window import MainWindow
 from spawn_utils.config_manager import ConfigManager
 from spawn_utils.yolo_handler import YOLOHandler
@@ -131,10 +130,9 @@ def main(**argv):
 ░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄ ▒█░ █ ░█ ▓██  ▀█ ██▒    ▒██  ▀█▄ ▒▒██▒▓██    ▓██░▒██▒ ▄██▒██░  ██▒▒ ▓██░ ▒░
   ▒   ██▒▒██▄█▓▒ ▒░██▄▄▄▄██░█░ █ ░█ ▓██▒  ▐▌██▒    ░██▄▄▄▄██░░██░▒██    ▒██ ▒██░█▀  ▒██   ██░░ ▓██▓ ░ 
 ▒██████▒▒▒██▒ ░  ░▒▓█   ▓██░░██▒██▓ ▒██░   ▓██░     ▓█   ▓██░░██░▒██▒   ░██▒░▓█  ▀█▓░ ████▓▒░  ▒██▒ ░ 
-▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ▒▒   ▓▒█ ░▓  ░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
-░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░   ▒▒ ░ ▒ ░░  ░      ░▒░▒   ░   ░ ▒ ▒░     ░    
-░  ░  ░  ░░         ░   ▒    ░   ░     ░   ░ ░       ░   ▒  ░ ▒ ░░      ░    ░    ░ ░ ░ ░ ▒    ░      
-      ░                 ░      ░             ░           ░    ░         ░    ░          ░ ░"""
+▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ░   ▒▒ ░ ▒ ░░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
+░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░    ░    ░         ░    ░    ░ ░ ░ ░ ▒    ░      
+░  ░  ░  ░░         ░   ▒    ░   ░     ░   ░ ░       ░    ░    ░         ░    ░          ░ ░"""
     )
     print("https://github.com/spawn9859/Spawn-Aim")
     pr_yellow("\nMake sure your game is in the center of your screen!")
@@ -216,22 +214,13 @@ def main(**argv):
         right = left + config_manager.get_setting("width")
         bottom = top + config_manager.get_setting("height")
 
-        screen = bettercam.create(output_color="BGRA", max_buffer_len=512)
-        if screen is None:
-            raise RuntimeError("Failed to create screen capture object")
-        
-        screen.start(
-            region=(left, top, right, bottom),
-            target_fps=config_manager.get_setting("max_fps"),
-            video_mode=True,
-        )
+        screen = mss.mss()
+        monitor = {"top": top, "left": left, "width": config_manager.get_setting("width"), "height": config_manager.get_setting("height")}
 
-        # Initialize variables for FPS calculation and auto aim toggle
         start_time = time.time()
         frame_count = 0
         pressing = False
-        # Pre-allocate arrays for object detection results
-        max_detections = 4  # Set this to the maximum number of detections expected
+        max_detections = 4
         boxes = np.zeros((max_detections, 4))
         confs = np.zeros((max_detections,))
         classes = np.zeros((max_detections,))
@@ -240,87 +229,59 @@ def main(**argv):
             nonlocal frame_count, start_time, pressing, max_detections, boxes, confs, classes
 
             frame_count += 1
-            np_frame = preprocess_frame(np.array(screen.get_latest_frame()))
+            np_frame = preprocess_frame(np.array(screen.grab(monitor)))
             pygame.event.pump()
 
-            # Initialize arrays for each iteration
-            targets = np.empty((0, 2), dtype=np.float32)
-            distances = np.empty(0, dtype=np.float32)
-            coordinates = np.empty((0, 4), dtype=np.float32)
-
-            # Convert frame to RGB format if necessary
             if np_frame.shape[2] == 4:
                 np_frame = np_frame[:, :, :3]
 
-                # --- Object Detection and Aim Assist ---
             with torch.no_grad():
-                # Apply frame masking if enabled
                 frame = mask_frame(np_frame)
+                detections = yolo_handler.detect(frame)
 
-                # Perform object detection using YOLOHandler
-                results = yolo_handler.detect(frame)
+                targets = np.empty((0, 2), dtype=np.float32)
+                distances = np.empty(0, dtype=np.float32)
+                coordinates = np.empty((0, 4), dtype=np.float32)
 
-                # Process detection results
-                if config_manager.get_setting("yolo_version") == "v5":
-                    if len(results.xyxy[0]) != 0:
-                        num_detections = len(results.xyxy[0])
-                        if num_detections > max_detections:
-                           max_detections = num_detections
-                           boxes = np.resize(boxes, (max_detections, 4))
-                           confs = np.resize(confs, max_detections)
-                           classes = np.resize(classes, max_detections)
-                        boxes[:num_detections] = results.xyxy[0][:, :4].cpu().numpy()
-                        confs[:num_detections] = results.xyxy[0][:, 4].cpu().numpy()
-                        classes[:num_detections] = results.xyxy[0][:, 5].cpu().numpy()
-                        coordinates = boxes[:num_detections]
-                        targets, distances = calculate_targets_numba(boxes[:num_detections], config_manager.get_setting("width"), config_manager.get_setting("height"), config_manager.get_setting("headshot") / 100)
+                if detections.shape[0] > 0:
+                    # Process detections
+                    valid_detections = detections[:, 4] > config_manager.get_setting("confidence") / 100
+                    boxes = detections[valid_detections, :4]
+                    confs = detections[valid_detections, 4]
+                    classes = detections[valid_detections, 5]
 
-                        if config_manager.get_setting("fov_enabled") == "on":
-                            fov_size = config_manager.get_setting("fov_size")
-                            fov_mask = np.sum(targets**2, axis=1) <= fov_size**2
-                            targets = targets[fov_mask]
-                            distances = distances[fov_mask]
-                            coordinates = coordinates[fov_mask]
+                    if boxes.shape[0] > 0:
+                        targets, distances = calculate_targets_numba(
+                            boxes,
+                            config_manager.get_setting("width"),
+                            config_manager.get_setting("height"),
+                            config_manager.get_setting("headshot") / 100,
+                        )
+                        coordinates = boxes
 
-                elif config_manager.get_setting("yolo_version") == "v8":
-                    for result in results:
-                        if len(result.boxes.xyxy) != 0:
-                           num_detections = len(result.boxes.xyxy)
-                           if num_detections > max_detections:
-                               max_detections = num_detections
-                               boxes = np.resize(boxes, (max_detections, 4))
-                               confs = np.resize(confs, max_detections)
-                               classes = np.resize(classes, max_detections)
-                           boxes[:num_detections] = result.boxes.xyxy.cpu().numpy()
-                           coordinates = boxes[:num_detections]
-                           targets, distances = calculate_targets_numba(boxes[:num_detections], config_manager.get_setting("width"), config_manager.get_setting("height"), config_manager.get_setting("headshot") / 100)
+                if config_manager.get_setting("fov_enabled") == "on":
+                    fov_size = config_manager.get_setting("fov_size")
+                    fov_mask = np.sum(targets**2, axis=1) <= fov_size**2
+                    targets = targets[fov_mask]
+                    distances = distances[fov_mask]
+                    coordinates = coordinates[fov_mask]
 
-                           if config_manager.get_setting("fov_enabled") == "on":
-                               fov_mask = np.sum(targets**2, axis=1) <= config_manager.get_setting("fov_size")**2
-                               targets = targets[fov_mask]
-                               distances = distances[fov_mask]
-                               coordinates = coordinates[fov_mask]
-
-            # Send aim assist commands based on detected targets
             send_targets(
-               controller,
-               config_manager.settings,
-               targets,
-               distances,
-               random_x,
-               random_y,
-               get_left_trigger,
-               get_right_trigger,
+                controller,
+                config_manager.settings,
+                targets,
+                distances,
+                random_x,
+                random_y,
+                get_left_trigger,
+                get_right_trigger,
             )
 
-            # Update preview window if enabled
             main_window.update_preview(np_frame, coordinates, targets, distances)
 
-            # Update overlay if enabled
             if config_manager.get_setting("overlay") == "on":
                main_window.update_overlay(coordinates)
 
-            # Calculate and update FPS label
             elapsed_time = time.time() - start_time
             if elapsed_time >= 0.2:
                main_window.update_fps_label(round(frame_count / elapsed_time))
@@ -328,7 +289,6 @@ def main(**argv):
                start_time = time.time()
                update_aim_shake()
 
-            # Toggle auto aim based on the left trigger of the Xbox controller
             if config_manager.get_setting("toggle") == "on":
                trigger_value = get_left_trigger(controller)
                if trigger_value > 0.5 and not pressing:
@@ -337,32 +297,19 @@ def main(**argv):
                elif trigger_value <= 0.5 and pressing:
                    pressing = False
 
-            # Check for quit key
             if win32api.GetKeyState(config_manager.get_setting("quit_key")) in (-127, -128):
                 main_window.on_closing()
                 return
 
-            # Schedule the next frame processing
             if main_window.running:
                 main_window.root.after(1, process_frame)
 
-        # Start frame processing
         main_window.root.after(1, process_frame)
-
-        # Run the main window
         main_window.run()
 
     except Exception as e:
         pr_red(f"An error occurred: {str(e)}")
     finally:
-        # Cleanup
-        if screen is not None:
-            try:
-                screen.stop()
-                screen.release()
-            except Exception as e:
-                pr_red(f"Error during cleanup: {str(e)}")
-        
         pr_green("Goodbye!")
 
 if __name__ == "__main__":
