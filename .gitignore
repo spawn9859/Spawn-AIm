@@ -171,3 +171,5 @@ models/taispawn.pt
 temp.pt
 send_targetsbackup.py
 mainbackup.py
+src/models/best.pt
+src/main.py.lprof

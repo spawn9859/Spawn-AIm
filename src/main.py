@@ -1,3 +1,4 @@
+from line_profiler import profile
 import os
 import sys
 import json
@@ -28,22 +29,12 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 # Define script directory
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Clone YOLOv5 repository and install requirements if not already present
-if not os.path.exists(f"{SCRIPT_DIR}/yolov5"):
-    os.system(f"git clone https://github.com/ultralytics/yolov5 {SCRIPT_DIR}/yolov5")
-    os.system(f"pip install -r {SCRIPT_DIR}/yolov5/requirements.txt")
-sys.path.append(f"{SCRIPT_DIR}/yolov5")
-
 # Use CuPy for GPU acceleration if available
 if torch.cuda.is_available():
     import cupy as cp
 
 # --- Global Variables ---
 MODELS_PATH = os.path.join(SCRIPT_DIR, "models")
-LAUNCHER_MODELS = [
-    os.path.splitext(file)[0]
-    for file in os.listdir(MODELS_PATH) if file.endswith(".pt")
-]
 
 screen = None
 random_x, random_y, arduino = 0, 0, None
@@ -116,8 +107,112 @@ def mask_frame(frame):
         ] = 0
     return frame
 
+def initialize_game_window():
+    global screen
+    left = int(win32api.GetSystemMetrics(0) / 2 - config_manager.get_setting("width") / 2)
+    top = int(win32api.GetSystemMetrics(1) / 2 - config_manager.get_setting("height") / 2)
+    right = left + config_manager.get_setting("width")
+    bottom = top + config_manager.get_setting("height")
+
+    screen = mss.mss()
+    return {"top": top, "left": left, "width": config_manager.get_setting("width"), "height": config_manager.get_setting("height")}
+
+@profile
+def process_detections(detections):
+    targets = np.empty((0, 2), dtype=np.float32)
+    distances = np.empty(0, dtype=np.float32)
+    coordinates = np.empty((0, 4), dtype=np.float32)
+
+    if detections.shape[0] > 0:
+        # Process detections
+        valid_detections = detections[:, 4] > config_manager.get_setting("confidence") / 100
+        boxes = detections[valid_detections, :4]
+        confs = detections[valid_detections, 4]
+        classes = detections[valid_detections, 5]
+
+        if boxes.shape[0] > 0:
+            targets, distances = calculate_targets_numba(
+                boxes,
+                config_manager.get_setting("width"),
+                config_manager.get_setting("height"),
+                config_manager.get_setting("headshot") / 100,
+            )
+            coordinates = boxes
+
+    if config_manager.get_setting("fov_enabled") == "on":
+        fov_size = config_manager.get_setting("fov_size")
+        fov_mask = np.sum(targets**2, axis=1) <= fov_size**2
+        targets = targets[fov_mask]
+        distances = distances[fov_mask]
+        coordinates = coordinates[fov_mask]
+
+    return targets, distances, coordinates
+
+@profile
+def main_loop(controller, main_window, yolo_handler, monitor):
+    start_time = time.time()
+    frame_count = 0
+    pressing = False
+
+    def process_frame():
+        nonlocal frame_count, start_time, pressing
+
+        frame_count += 1
+        np_frame = preprocess_frame(np.array(screen.grab(monitor)))
+        pygame.event.pump()
+
+        if np_frame.shape[2] == 4:
+            np_frame = np_frame[:, :, :3]
+
+        with torch.no_grad():
+            frame = mask_frame(np_frame)
+            detections = yolo_handler.detect(frame)
+            targets, distances, coordinates = process_detections(detections)
+
+        send_targets(
+            controller,
+            config_manager.settings,
+            targets,
+            distances,
+            random_x,
+            random_y,
+            get_left_trigger,
+            get_right_trigger,
+        )
+
+        main_window.update_preview(np_frame, coordinates, targets, distances)
+
+        if config_manager.get_setting("overlay") == "on":
+           main_window.update_overlay(coordinates)
+
+        elapsed_time = time.time() - start_time
+        if elapsed_time >= 0.2:
+           main_window.update_fps_label(round(frame_count / elapsed_time))
+           frame_count = 0
+           start_time = time.time()
+           update_aim_shake()
+
+        if config_manager.get_setting("toggle") == "on":
+           trigger_value = get_left_trigger(controller)
+           if trigger_value > 0.5 and not pressing:
+               pressing = True
+               main_window.toggle_auto_aim()
+           elif trigger_value <= 0.5 and pressing:
+               pressing = False
+
+        if win32api.GetKeyState(config_manager.get_setting("quit_key")) in (-127, -128):
+            main_window.on_closing()
+            return
+
+        if main_window.running:
+            main_window.root.after(1, process_frame)
+
+    main_window.root.after(1, process_frame)
+    main_window.run()
+
+@profile
 def main(**argv):
-    global screen, config_manager
+    global config_manager
 
     # Initialize ConfigManager
     config_manager = ConfigManager(argv['settingsProfile'])
@@ -147,9 +242,6 @@ def main(**argv):
         "r",
     ) as f:
         launcher_settings = json.load(f)
-
-    # Define available mouse input methods
-    mouse_inputs = ["default", "arduino"]
 
     # Detect available serial ports
     ports = [port[0] for port in serial.tools.list_ports.comports()]
@@ -209,103 +301,9 @@ def main(**argv):
 
     try:
         # Initialize screen capture
-        left = int(win32api.GetSystemMetrics(0) / 2 - config_manager.get_setting("width") / 2)
-        top = int(win32api.GetSystemMetrics(1) / 2 - config_manager.get_setting("height") / 2)
-        right = left + config_manager.get_setting("width")
-        bottom = top + config_manager.get_setting("height")
+        monitor = initialize_game_window()
 
-        screen = mss.mss()
-        monitor = {"top": top, "left": left, "width": config_manager.get_setting("width"), "height": config_manager.get_setting("height")}
-
-        start_time = time.time()
-        frame_count = 0
-        pressing = False
-        max_detections = 4
-        boxes = np.zeros((max_detections, 4))
-        confs = np.zeros((max_detections,))
-        classes = np.zeros((max_detections,))
-
-        def process_frame():
-            nonlocal frame_count, start_time, pressing, max_detections, boxes, confs, classes
-
-            frame_count += 1
-            np_frame = preprocess_frame(np.array(screen.grab(monitor)))
-            pygame.event.pump()
-
-            if np_frame.shape[2] == 4:
-                np_frame = np_frame[:, :, :3]
-
-            with torch.no_grad():
-                frame = mask_frame(np_frame)
-                detections = yolo_handler.detect(frame)
-
-                targets = np.empty((0, 2), dtype=np.float32)
-                distances = np.empty(0, dtype=np.float32)
-                coordinates = np.empty((0, 4), dtype=np.float32)
-
-                if detections.shape[0] > 0:
-                    # Process detections
-                    valid_detections = detections[:, 4] > config_manager.get_setting("confidence") / 100
-                    boxes = detections[valid_detections, :4]
-                    confs = detections[valid_detections, 4]
-                    classes = detections[valid_detections, 5]
-
-                    if boxes.shape[0] > 0:
-                        targets, distances = calculate_targets_numba(
-                            boxes,
-                            config_manager.get_setting("width"),
-                            config_manager.get_setting("height"),
-                            config_manager.get_setting("headshot") / 100,
-                        )
-                        coordinates = boxes
-
-                if config_manager.get_setting("fov_enabled") == "on":
-                    fov_size = config_manager.get_setting("fov_size")
-                    fov_mask = np.sum(targets**2, axis=1) <= fov_size**2
-                    targets = targets[fov_mask]
-                    distances = distances[fov_mask]
-                    coordinates = coordinates[fov_mask]
-
-            send_targets(
-                controller,
-                config_manager.settings,
-                targets,
-                distances,
-                random_x,
-                random_y,
-                get_left_trigger,
-                get_right_trigger,
-            )
-
-            main_window.update_preview(np_frame, coordinates, targets, distances)
-
-            if config_manager.get_setting("overlay") == "on":
-               main_window.update_overlay(coordinates)
-
-            elapsed_time = time.time() - start_time
-            if elapsed_time >= 0.2:
-               main_window.update_fps_label(round(frame_count / elapsed_time))
-               frame_count = 0
-               start_time = time.time()
-               update_aim_shake()
-
-            if config_manager.get_setting("toggle") == "on":
-               trigger_value = get_left_trigger(controller)
-               if trigger_value > 0.5 and not pressing:
-                   pressing = True
-                   main_window.toggle_auto_aim()
-               elif trigger_value <= 0.5 and pressing:
-                   pressing = False
-
-            if win32api.GetKeyState(config_manager.get_setting("quit_key")) in (-127, -128):
-                main_window.on_closing()
-                return
-
-            if main_window.running:
-                main_window.root.after(1, process_frame)
-
-        main_window.root.after(1, process_frame)
-        main_window.run()
+        main_loop(controller, main_window, yolo_handler, monitor)
 
     except Exception as e:
         pr_red(f"An error occurred: {str(e)}")
