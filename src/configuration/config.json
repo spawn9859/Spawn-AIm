@@ -5,7 +5,7 @@
     "recoil": "off",
     "aim_shake": "off",
     "overlay": "off",
-    "preview": "on",
+    "preview": "off",
     "mask_left": "on",
     "mask_right": "off",
     "sensitivity": 16.0,
@@ -30,7 +30,7 @@
     "arduino": "COM1",
     "max_fps": 175,
     "movementAmp": 0.16,
-    "confidence": 20.4,
+    "confidence": 59.7,
     "headshotMode": true,
     "headshotDistanceModifier": 0.3,
     "displayCPS": true,
@@ -61,5 +61,6 @@
     "fps": 165,
     "smoothing_factor": 0.0,
     "confidence_threshold": 0.6,
-    "recoil_control": "off"
+    "recoil_control": "off",
+    "calibration_mode": "off"
 }

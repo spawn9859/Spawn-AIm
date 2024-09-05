@@ -53,6 +53,7 @@ class ConfigManager:
             "fov_enabled": "off",
             "show_fov": "off",
             "confidence": 0.55,  # Changed from string to float
+            "calibration_mode": "off",
         }
         
         for key, default_value in default_values.items():

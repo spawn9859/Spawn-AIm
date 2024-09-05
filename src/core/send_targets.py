@@ -25,7 +25,7 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
         (trigger_pressed and settings["toggle"] == "off") or settings["toggle"] == "on"
     )
 
-    if auto_aim_active:
+    if auto_aim_active and settings["calibration_mode"] == "off":
         mouse_move_x = int(target_x * sensitivity_factor)
         mouse_move_y = int(target_y * sensitivity_factor)
 
@@ -36,6 +36,8 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
 
         if settings["trigger_bot"] == "on":
             trigger_bot(target_x, target_y, settings)
+
+    return target_x, target_y  # Return target coordinates for calibration
 
 def _move_mouse(move_x, move_y, settings):
     if settings["mouse_input"] == "arduino":

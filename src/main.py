@@ -148,16 +148,52 @@ def process_detections(detections):
 
     return targets, distances, coordinates
 
+def calibrate_sensitivity(current_sensitivity, target_positions, frame_time):
+    """
+    Adjust sensitivity based on aim behavior.
+    """
+    if len(target_positions) < 2:
+        return current_sensitivity
+
+    # Calculate the average movement speed
+    movements = np.diff(target_positions, axis=0)
+    avg_speed = np.mean(np.linalg.norm(movements, axis=1)) / frame_time
+
+    # Define ideal speed range
+    min_speed = 100  # pixels per second
+    max_speed = 300  # pixels per second
+
+    # Calculate oscillation
+    oscillation = np.mean(np.abs(np.diff(np.sign(movements), axis=0)))
+
+    # Adjust sensitivity
+    if avg_speed < min_speed:
+        adjustment = 1.1  # Increase sensitivity by 10%
+    elif avg_speed > max_speed or oscillation > 0.5:
+        adjustment = 0.9  # Decrease sensitivity by 10%
+    else:
+        adjustment = 1.0  # Keep current sensitivity
+
+    return current_sensitivity * adjustment
+
 @profile
 def main_loop(controller, main_window, yolo_handler, monitor):
     start_time = time.time()
     frame_count = 0
     pressing = False
+    calibration_mode = False
+    target_positions = []
+    last_frame_time = time.time()
+    sensitivity_history = []
 
     def process_frame():
-        nonlocal frame_count, start_time, pressing
+        nonlocal frame_count, start_time, pressing, calibration_mode, target_positions, last_frame_time, sensitivity_history
 
         frame_count += 1
+        current_time = time.time()
+        frame_time = current_time - last_frame_time
+        last_frame_time = current_time
+
         np_frame = preprocess_frame(np.array(screen.grab(monitor)))
         pygame.event.pump()
 
@@ -168,6 +204,26 @@ def main_loop(controller, main_window, yolo_handler, monitor):
             frame = mask_frame(np_frame)
             detections = yolo_handler.detect(frame)
             targets, distances, coordinates = process_detections(detections)
+
+        if calibration_mode and len(targets) > 0:
+            target_positions.append(targets[0])  # Store the position of the first target
+            if len(target_positions) > 10:  # Use the last 10 frames for calibration
+                target_positions.pop(0)
+            
+            if len(target_positions) == 10:
+                new_sensitivity = calibrate_sensitivity(
+                    config_manager.get_setting("sensitivity"),
+                    np.array(target_positions),
+                    frame_time
+                )
+                sensitivity_history.append(new_sensitivity)
+                if len(sensitivity_history) > 5:
+                    sensitivity_history.pop(0)
+                
+                # Use the average of recent sensitivity adjustments
+                avg_sensitivity = np.mean(sensitivity_history)
+                config_manager.update_setting("sensitivity", avg_sensitivity)
+                main_window.update_sensitivity_slider(avg_sensitivity)
 
         send_targets(
             controller,
@@ -209,6 +265,12 @@ def main_loop(controller, main_window, yolo_handler, monitor):
 
     main_window.root.after(1, process_frame)
     main_window.run()
+
+def toggle_calibration_mode():
+    global calibration_mode
+    calibration_mode = not calibration_mode
+    config_manager.update_setting("calibration_mode", "on" if calibration_mode else "off")
+    print(f"Calibration mode: {'On' if calibration_mode else 'Off'}")
 
 @profile
 def main(**argv):
@@ -289,6 +351,9 @@ def main(**argv):
     config_manager.update_setting("arduino", default_port)
     config_manager.update_setting("fov_enabled", "on" if launcher_settings["fovToggle"] else "off")
     config_manager.update_setting("fov_size", launcher_settings["fovSize"])
+
+    # Add calibration setting
+    config_manager.update_setting("calibration_mode", "off")
 
     # Create main window
     main_window = MainWindow(config_manager)

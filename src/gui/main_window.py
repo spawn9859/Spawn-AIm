@@ -125,6 +125,10 @@ class MainWindow:
         quit_key_label = ctk.CTkLabel(key_frame, text=f"Quit key: {self.config_manager.get_setting('quit_key_string')}")
         quit_key_label.pack(side="left", padx=5)
 
+        # Calibration button
+        self.calibration_button = ctk.CTkButton(left_column, text="Start Calibration", command=self.toggle_calibration_mode)
+        self.calibration_button.pack(pady=10)
+
         # Right column
         right_column = ctk.CTkFrame(main_frame)
         right_column.pack(side="right", fill="both", expand=True, padx=(5, 0))
@@ -315,6 +319,16 @@ class MainWindow:
         # Implement keybindings window logic here
         print("Showing keybindings...")
         # You might want to create a new window to display keybindings
+
+    def toggle_calibration_mode(self):
+        current_mode = self.config_manager.get_setting("calibration_mode")
+        new_mode = "off" if current_mode == "on" else "on"
+        self.config_manager.update_setting("calibration_mode", new_mode)
+        self.calibration_button.configure(text=f"{'Stop' if new_mode == 'on' else 'Start'} Calibration")
+        print(f"Calibration mode: {new_mode}")
+
+    def update_sensitivity_slider(self, new_sensitivity):
+        self.main_sliders["sensitivity"].set(new_sensitivity)
 
     def run(self):
         self.root.mainloop()
