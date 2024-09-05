@@ -3,7 +3,7 @@ import os
 
 class ConfigManager:
     def __init__(self, settings_profile):
-        self.script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        self.script_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         self.config_path = os.path.join(self.script_dir, "configuration", f"{settings_profile.lower()}.json")
         self.key_mapping_path = os.path.join(self.script_dir, "configuration", "key_mapping.json")
         self.settings = self.load_settings()

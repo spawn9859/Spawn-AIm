@@ -18,11 +18,11 @@ from utils.general import non_max_suppression
 from ultralytics import YOLO
 from ultralytics.utils import ops
 import mss
-from controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
+from core.controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
 from core.send_targets import send_targets
 from gui.main_window import MainWindow
-from spawn_utils.config_manager import ConfigManager
-from spawn_utils.yolo_handler import YOLOHandler
+from utils.config.config_manager import ConfigManager
+from utils.yolo.yolo_handler import YOLOHandler
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
