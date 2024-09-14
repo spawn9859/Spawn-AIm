@@ -1,23 +1,20 @@
-from line_profiler import profile
-import os
-import sys
 import json
-import time
+import os
 import random
+import sys
+import time
+
+import mss
 import numba
-import threading
-import torch
 import numpy as np
 import pygame
 import serial
-import onnxruntime as ort
 import serial.tools.list_ports
-from colorama import Fore, Style
+import torch
 import win32api
-from utils.general import non_max_suppression
-from ultralytics import YOLO
-from ultralytics.utils import ops
-import mss
+from colorama import Fore, Style
+from line_profiler import profile
+
 from controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
 from core.send_targets import send_targets
 from gui.main_window import MainWindow
@@ -31,7 +28,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Use CuPy for GPU acceleration if available
 if torch.cuda.is_available():
-    import cupy as cp
+    pass
 
 # --- Global Variables ---
 MODELS_PATH = os.path.join(SCRIPT_DIR, "models")
@@ -153,9 +150,11 @@ def main_loop(controller, main_window, yolo_handler, monitor):
     start_time = time.time()
     frame_count = 0
     pressing = False
+    loop_times = []
 
     def process_frame():
         nonlocal frame_count, start_time, pressing
+        loop_start = time.time()
 
         frame_count += 1
         np_frame = preprocess_frame(np.array(screen.grab(monitor)))
@@ -203,6 +202,14 @@ def main_loop(controller, main_window, yolo_handler, monitor):
         if win32api.GetKeyState(config_manager.get_setting("quit_key")) in (-127, -128):
             main_window.on_closing()
             return
+
+        loop_end = time.time()
+        loop_times.append(loop_end - loop_start)
+
+        if len(loop_times) >= 100:
+            avg_loop_time = sum(loop_times) / len(loop_times)
+            print(f"Average loop time: {avg_loop_time:.6f} seconds")
+            loop_times.clear()
 
         if main_window.running:
             main_window.root.after(1, process_frame)

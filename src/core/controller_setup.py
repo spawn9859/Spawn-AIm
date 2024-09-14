@@ -1,20 +1,19 @@
 import pygame
+import logging  # Added for logging errors
 
-# This is for Xbox One controllers!
+class ControllerInitializationError(Exception):
+    pass
 
 def initialize_pygame_and_controller():
     pygame.init()
     pygame.joystick.init()
     try:
-        controller = pygame.joystick.Joystick(
-            0
-        )  # Assumes the controller is the first joystick
+        controller = pygame.joystick.Joystick(0)
         controller.init()
         return controller
-    except pygame.error:
-        print("Unable to initialize the Xbox Controller")
-        return None
-
+    except pygame.error as e:
+        logging.error("Unable to initialize the Xbox Controller")
+        raise ControllerInitializationError("Controller initialization failed") from e
 
 def get_left_trigger(controller):
     return (

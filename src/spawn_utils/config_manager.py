@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 
 class ConfigManager:
     def __init__(self, settings_profile):
@@ -8,26 +9,28 @@ class ConfigManager:
         self.key_mapping_path = os.path.join(self.script_dir, "configuration", "key_mapping.json")
         self.settings = self.load_settings()
         self.key_mapping = self.load_key_mapping()
-        self.settings["show_fov"] = "off"
+        self.settings["show_fov"] = False
         self.load_settings()
         
 
     def load_settings(self):
         with open(self.config_path, "r") as f:
-            return json.load(f)
-        self.validate_settings()
+            self.settings = json.load(f)
+        
+        self.validate_settings()  # Moved before return
+        return self.settings
 
     def validate_settings(self):
         default_values = {
-            "auto_aim": "off",
-            "trigger_bot": "off",
-            "toggle": "off",
-            "recoil": "off",
-            "aim_shake": "off",
-            "overlay": "off",
-            "preview": "off",
-            "mask_left": "off",
-            "mask_right": "off",
+            "auto_aim": False,
+            "trigger_bot": False,
+            "toggle": False,
+            "recoil": False,
+            "aim_shake": False,
+            "overlay": False,
+            "preview": False,
+            "mask_left": False,
+            "mask_right": False,
             "sensitivity": 14.0,
             "headshot": 40.0,
             "trigger_bot_distance": 8,
@@ -50,14 +53,26 @@ class ConfigManager:
             "arduino": "COM1",
             "max_fps": 180,
             "fov_size": 160,
-            "fov_enabled": "off",
-            "show_fov": "off",
+            "fov_enabled": False,
+            "show_fov": False,
             "confidence": 0.55,  # Changed from string to float
         }
         
         for key, default_value in default_values.items():
-            if key not in self.settings or not isinstance(self.settings[key], type(default_value)):
+            if key not in self.settings:
                 self.settings[key] = default_value
+                continue
+
+            if isinstance(default_value, bool):
+                self.settings[key] = bool(self.settings[key])
+            elif isinstance(default_value, (int, float)):
+                try:
+                    self.settings[key] = type(default_value)(self.settings[key])
+                except (ValueError, TypeError):
+                    self.settings[key] = default_value
+            elif isinstance(default_value, str):
+                self.settings[key] = str(self.settings[key])
+            # Add more type checks as necessary
         
 
     def load_key_mapping(self):

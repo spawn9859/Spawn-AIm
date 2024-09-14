@@ -15,13 +15,11 @@ def create_checkboxes(root, config_manager, update_callback):
     ]
 
     for i, (key, text) in enumerate(checkbox_configs):
-        var = ctk.StringVar(value=config_manager.get_setting(key))
+        var = ctk.BooleanVar(value=config_manager.get_setting(key))
         checkbox = ctk.CTkCheckBox(
             root,
             text=text,
             variable=var,
-            onvalue="on",
-            offvalue="off",
             command=lambda k=key, v=var: update_callback(k, v.get()),
         )
         checkbox.grid(row=i//3, column=i%3, padx=5, pady=2, sticky="w")
