@@ -10,13 +10,24 @@ import win32api
 import threading
 import queue
 import time
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
 
 class MainWindow:
     def __init__(self, config_manager):
         self.root = ctk.CTk()
         self.root.title("Spawn-Aim")
         self.root.geometry("800x900")
-        self.root.resizable(width=False, height=False)
+        self.root.minsize(600, 700)  # Set minimum size
+        self.root.resizable(width=True, height=True)  # Allow resizing
         
         self.config_manager = config_manager
         self.fov_overlay = None
@@ -36,13 +47,16 @@ class MainWindow:
             self.root.after(100, self.periodic_update)  # Schedule next update
 
     def setup_ui(self):
-        # Create main frame
+        # Use grid geometry manager for more flexibility
         self.main_frame = ctk.CTkFrame(self.root)
         self.main_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
+
         # Create tabs
         self.tabview = ctk.CTkTabview(self.main_frame)
-        self.tabview.pack(fill="both", expand=True)
+        self.tabview.grid(row=0, column=0, sticky="nsew")
 
         self.tab_main = self.tabview.add("Main")
         self.tab_settings = self.tabview.add("Settings")
@@ -82,21 +96,22 @@ class MainWindow:
         fov_frame = ctk.CTkFrame(left_column)
         fov_frame.pack(fill="x", pady=10)
         
-        self.fov_visible = ctk.StringVar(value=self.config_manager.get_setting("show_fov"))
+        self.fov_visible = ctk.BooleanVar(value=self.config_manager.get_setting("show_fov"))
         self.fov_checkbox = ctk.CTkCheckBox(
             fov_frame,
             text="Show FOV",
             variable=self.fov_visible,
-            onvalue="on",
-            offvalue="off",
+            onvalue=True,
+            offvalue=False,
             command=self.toggle_fov_visibility,
         )
         self.fov_checkbox.pack(side="left", padx=5)
 
+        self.enable_fov_var = ctk.BooleanVar(value=self.config_manager.get_setting("fov_enabled"))
         self.enable_fov = ctk.CTkCheckBox(
             fov_frame,
             text="Enable FOV",
-            variable=ctk.StringVar(value=self.config_manager.get_setting("fov_enabled")),
+            variable=self.enable_fov_var,
             command=self.toggle_fov_enabled,
         )
         self.enable_fov.pack(side="left", padx=5)
@@ -130,15 +145,12 @@ class MainWindow:
         right_column.pack(side="right", fill="both", expand=True, padx=(5, 0))
 
         # Preview image
-        self.preview_image = ctk.CTkImage(
-            light_image=Image.new("RGB", (320, 320), color="gray"),
-            dark_image=Image.new("RGB", (320, 320), color="gray"),
-            size=(320, 320)
-        )
-        self.preview_label = ctk.CTkLabel(right_column, image=self.preview_image, text="")
+        self.preview_image = Image.new("RGB", (320, 320), color="gray")
+        self.preview_photo = ImageTk.PhotoImage(self.preview_image)
+        self.preview_label = ctk.CTkLabel(right_column, image=self.preview_photo, text="")
         self.preview_label.pack(pady=10)
         
-        if self.config_manager.get_setting("preview") != "on":
+        if not self.config_manager.get_setting("preview"):
             self.preview_label.pack_forget()
 
     def setup_settings_tab(self):
@@ -185,47 +197,50 @@ class MainWindow:
             self.toggle_preview(value)
 
     def toggle_preview(self, value):
-        if value == "on":
+        if value:
             self.preview_label.pack(pady=10)
         else:
             self.preview_label.pack_forget()
 
     def update_preview(self, frame, coordinates, targets, distances):
-        if self.config_manager.get_setting("preview") == "on":
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            frame = cv2.resize(frame, (240, 240))
-            image = Image.fromarray(frame)
-            draw = ImageDraw.Draw(image)
-            
-            # Draw bounding boxes
-            for coord in coordinates:
-                x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
-                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-            
-            # Draw aim lines
-            center_x, center_y = 120, 120
-            if len(targets) > 0:
-                min_distance_index = np.argmin(distances)
-                for i, (target_x, target_y) in enumerate(targets):
-                    color = "yellow" if i == min_distance_index else "blue"
-                    scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
-                    scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
-                    draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
-                    draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
+        if self.config_manager.get_setting("preview"):
+            try:
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                frame = cv2.resize(frame, (240, 240))
+                image = Image.fromarray(frame)
+                draw = ImageDraw.Draw(image)
+                
+                # Draw bounding boxes
+                for coord in coordinates:
+                    x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
+                    draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
+                
+                # Draw aim lines
+                center_x, center_y = 120, 120
+                if len(targets) > 0:
+                    min_distance_index = np.argmin(distances)
+                    for i, (target_x, target_y) in enumerate(targets):
+                        color = "yellow" if i == min_distance_index else "blue"
+                        scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
+                        scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
+                        draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
+                        draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
 
-            # Draw FOV circle if enabled
-            if self.config_manager.get_setting("show_fov") == "on":
-                fov_size = self.config_manager.get_setting("fov_size")
-                scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
-                draw.ellipse(
-                    [center_x - scaled_fov_size, center_y - scaled_fov_size,
-                     center_x + scaled_fov_size, center_y + scaled_fov_size],
-                    outline="red", width=2
-                )
+                # Draw FOV circle if enabled
+                if self.config_manager.get_setting("show_fov"):
+                    fov_size = self.config_manager.get_setting("fov_size")
+                    scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
+                    draw.ellipse(
+                        [center_x - scaled_fov_size, center_y - scaled_fov_size,
+                         center_x + scaled_fov_size, center_y + scaled_fov_size],
+                        outline="red", width=2
+                    )
 
-            photo = ImageTk.PhotoImage(image=image)
-            self.preview_label.configure(image=photo)
-            self.preview_label.image = photo
+                self.preview_photo = ImageTk.PhotoImage(image=image)
+                self.preview_label.configure(image=self.preview_photo)
+                self.preview_label.image = self.preview_photo
+            except Exception as e:
+                logging.error(f"Failed to update preview: {e}")
 
     def update_fps_label(self, fps):
         self.root.after(0, self._update_fps_label_gui, fps)
@@ -236,26 +251,26 @@ class MainWindow:
     def toggle_fov_visibility(self):
         value = self.fov_visible.get()
         self.config_manager.update_setting("show_fov", value)
-        if value == "on":
+        if value:
             self.create_fov_overlay()
         else:
             self.destroy_fov_overlay()
 
     def toggle_fov_enabled(self):
         current_value = self.config_manager.get_setting("fov_enabled")
-        new_value = "off" if current_value == "on" else "on"
+        new_value = not current_value
         self.config_manager.update_setting("fov_enabled", new_value)
         
         # Update the checkbox state
-        self.enable_fov.configure(variable=ctk.StringVar(value=new_value))
+        self.enable_fov_var.set(new_value)
         
         # Update the FOV visibility based on the new state
-        if new_value == "on":
+        if new_value:
             self.create_fov_overlay()
         else:
             self.destroy_fov_overlay()
         
-        print(f"FOV Enabled: {new_value}")  # Debug print
+        logging.debug(f"FOV Enabled: {new_value}")  # Replace print with logging
 
     def create_fov_overlay(self):
         if self.fov_overlay is None:
@@ -287,7 +302,7 @@ class MainWindow:
             self.fov_overlay = None
 
     def update_fov_overlay(self):
-        if self.fov_overlay and self.config_manager.get_setting("show_fov") == "on":
+        if self.fov_overlay and self.config_manager.get_setting("show_fov"):
             self.fov_canvas.delete("all")
             
             screen_width = win32api.GetSystemMetrics(win32con.SM_CXSCREEN)
@@ -308,12 +323,12 @@ class MainWindow:
 
     def reload_model(self):
         # Implement model reloading logic here
-        print("Reloading model...")
+        logging.info("Reloading model...")
         # You might want to call a method from your config_manager or another appropriate class to reload the model
 
     def show_keybindings(self):
         # Implement keybindings window logic here
-        print("Showing keybindings...")
+        logging.info("Showing keybindings...")
         # You might want to create a new window to display keybindings
 
     def run(self):
