@@ -13,7 +13,7 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
     global last_move_time
     current_time = time.time()
     if current_time - last_move_time < MOVE_INTERVAL:
-        return  # Skip if called too soon
+        return
     last_move_time = current_time
 
     if distances.size == 0:
@@ -29,6 +29,7 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
     target_x = np.clip(target_x + random_x * aim_shake_strength, -max_move, max_move)
     target_y = np.clip(target_y + random_y * aim_shake_strength, -max_move, max_move)
 
+    # Get input based on device type
     trigger_pressed = get_left_trigger(controller) > 0.5
     auto_aim_active = settings["auto_aim"] and (
         (trigger_pressed and not settings["toggle"]) or settings["toggle"]

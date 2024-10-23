@@ -13,7 +13,7 @@ import win32api
 import logging
 from line_profiler import profile
 from serial.tools import list_ports
-from core.controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger, ControllerInitializationError
+from core.controller_setup import get_left_trigger, get_right_trigger, ControllerInitializationError, initialize_input_device
 from core.send_targets import send_targets
 from gui.main_window import MainWindow
 from spawn_utils.config_manager import ConfigManager
@@ -76,12 +76,12 @@ class AimAssistant:
         with open(settings_path, "r") as f:
             launcher_settings = json.load(f)
 
-        # Initialize Pygame and controller
-        try:
-            self.controller = initialize_pygame_and_controller()
-        except ControllerInitializationError:
-            logging.error("Controller not found. Exiting application.")
-            sys.exit(1)
+        # Initialize input device (controller or mouse)
+        input_device = initialize_input_device()
+        self.controller = input_device
+        
+        if input_device["type"] == "mouse":
+            logging.info("Using mouse input - Right click to activate aim assist")
 
         # Get key codes
         activation_key = self.get_keycode(launcher_settings.get("activationKey", "F1"))
@@ -121,6 +121,7 @@ class AimAssistant:
             "arduino": self.arduino,
             "fov_enabled": launcher_settings.get("fovToggle", False),
             "fov_size": launcher_settings.get("fovSize", 100),
+            "input_type": input_device["type"],  # Add this line
         }
 
         for key, value in defaults.items():
@@ -201,11 +202,8 @@ class AimAssistant:
             start_time = time.time()
             frame_count = 0
             pressing = False
-            loop_times = []
 
             while self.main_window.running and not self.shutdown_event.is_set():
-                loop_start = time.time()
-
                 frame_count += 1
                 np_frame = self.preprocess_frame(np.array(self.screen.grab(monitor)))
                 pygame.event.pump()
@@ -253,14 +251,6 @@ class AimAssistant:
                     self.main_window.root.after(0, self.main_window.on_closing)
                     break
 
-                loop_end = time.time()
-                loop_times.append(loop_end - loop_start)
-
-                if len(loop_times) >= 100:
-                    avg_loop_time = sum(loop_times) / len(loop_times)
-                    logging.info(f"Average loop time: {avg_loop_time:.6f} seconds")
-                    loop_times.clear()
-
                 await asyncio.sleep(0)  # Yield control to the event loop
 
         except Exception as e:
@@ -276,7 +266,7 @@ class AimAssistant:
           ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
         ▒██    ▒ ▓██░  ██ ▒████▄   ▓█░ █ ░█░ ██ ▀█   █     ▒████▄   ▒▓██▒▓██▒▀█▀ ██▒▓█████▄ ▒██▒  ██▒▓  ██▒ ▓▒
         ░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄ ▒█░ █ ░█ ▓██  ▀█ ██▒    ▒██  ▀█▄ ▒▒██▒▓██    ▓██░▒██▒ ▄██▒██░  ██▒▒ ▓██░ ▒░
-          ▒   ██▒▒██▄█▓▒ ▒░██▄▄▄▄██░█░ █ ░█ ▓██▒  ▐▌██▒    ░██▄▄▄▄██░░██░▒██    ▒██ ▒██░█▀  ▒██   ██░░ ▓██▓ ░ 
+          ▒   ██��▒██▄█▓▒ ▒░██▄▄▄▄██░█░ █ ░█ ▓██▒  ▐▌██▒    ░██▄▄▄▄██░░██░▒██    ▒██ ▒██░█▀  ▒██   ██░░ ▓██▓ ░ 
         ▒██████▒▒▒██▒ ░  ░▒▓█   ▓██░░██▒██▓ ▒██░   ▓██░     ▓█   ▓██░ ▒ ░░ ▒░   ░██▒░▓█  ▀█▓░ ████▓▒░  ▒██▒ ░ 
         ▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ░   ▒▒ ░ ▒ ░░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
         ░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░    ░    ░         ░    ░    ░ ░ ░ ░ ▒    ░      
