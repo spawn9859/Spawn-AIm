@@ -63,5 +63,5 @@
     "confidence_threshold": 0.6,
     "recoil_control": "off",
     "auto_aim_toggle": false,
-    "input_type": "controller"
+    "input_type": "mouse"
 }

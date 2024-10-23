@@ -205,13 +205,13 @@ class AimAssistant:
 
             while self.main_window.running and not self.shutdown_event.is_set():
                 frame_count += 1
-                np_frame = self.preprocess_frame(np.array(self.screen.grab(monitor)))
+                np_frame = np.array(self.screen.grab(monitor))
                 pygame.event.pump()
 
-                with torch.no_grad():
-                    frame = self.mask_frame(np_frame)
-                    detections = self.yolo_handler.detect(frame)
-                    targets, distances, coordinates = self.process_detections(detections)
+                # Offload CPU-bound tasks to a separate thread
+                frame = await self.loop.run_in_executor(None, self.mask_frame, self.preprocess_frame(np_frame))
+                detections = await self.loop.run_in_executor(None, self.yolo_handler.detect, frame)
+                targets, distances, coordinates = await self.loop.run_in_executor(None, self.process_detections, detections)
 
                 send_targets(
                     self.controller,
@@ -266,7 +266,7 @@ class AimAssistant:
           ██████  ██▓███   ▄▄▄      █     █░ ███▄    █      ▄▄▄       ██▓ ███▄ ▄███▓ ▄▄▄▄    ▒█████  ▄▄▄█████▓
         ▒██    ▒ ▓██░  ██ ▒████▄   ▓█░ █ ░█░ ██ ▀█   █     ▒████▄   ▒▓██▒▓██▒▀█▀ ██▒▓█████▄ ▒██▒  ██▒▓  ██▒ ▓▒
         ░ ▓██▄   ▓██░ ██▓▒▒██  ▀█▄ ▒█░ █ ░█ ▓██  ▀█ ██▒    ▒██  ▀█▄ ▒▒██▒▓██    ▓██░▒██▒ ▄██▒██░  ██▒▒ ▓██░ ▒░
-          ▒   ██��▒██▄█▓▒ ▒░██▄▄▄▄██░█░ █ ░█ ▓██▒  ▐▌██▒    ░██▄▄▄▄██░░██░▒██    ▒██ ▒██░█▀  ▒██   ██░░ ▓██▓ ░ 
+          ▒   ██▒▒██▄█▓▒ ▒░██▄▄▄▄██░█░ █ ░█ ▓██▒  ▐▌██▒    ░██▄▄▄▄██░░██░▒██    ▒██ ▒██░█▀  ▒██   ██░░ ▓██▓ ░ 
         ▒██████▒▒▒██▒ ░  ░▒▓█   ▓██░░██▒██▓ ▒██░   ▓██░     ▓█   ▓██░ ▒ ░░ ▒░   ░██▒░▓█  ▀█▓░ ████▓▒░  ▒██▒ ░ 
         ▒ ▒▓▒ ▒ ░▒▓▒░ ░  ░░▒▒   ▓▒█░ ▓░▒ ▒  ░ ▒░   ▒ ▒      ░   ▒▒ ░ ▒ ░░ ▒░   ░  ░░▒▓███▀▒░ ▒░▒░▒░   ▒ ░░   
         ░ ░▒  ░  ░▒ ░     ░ ░   ▒▒   ▒ ░ ░  ░ ░░   ░ ▒░      ░    ░    ░         ░    ░    ░ ░ ░ ░ ▒    ░      
