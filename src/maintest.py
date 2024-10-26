@@ -11,6 +11,8 @@ import pygame
 import torch
 import win32api
 import logging
+import winloop
+from concurrent.futures import ThreadPoolExecutor  # {{ edit_6 }} Replace ProcessPoolExecutor with ThreadPoolExecutor
 from line_profiler import profile
 from serial.tools import list_ports
 from core.controller_setup import get_left_trigger, get_right_trigger, ControllerInitializationError, initialize_input_device
@@ -63,9 +65,13 @@ class AimAssistant:
         if self.config_manager.get_setting("overlay"):
             self.main_window.toggle_overlay()
 
-        # Initialize the asyncio event loop for the background thread
+        # Configure asyncio to use winloop for better performance
+        asyncio.set_event_loop_policy(winloop.EventLoopPolicy())  # {{ edit_2 }}
         self.loop = asyncio.new_event_loop()
         self.shutdown_event = threading.Event()
+
+        # Initialize ThreadPoolExecutor for CPU-bound tasks  # {{ edit_3 }}
+        self.process_pool = ThreadPoolExecutor()  # {{ edit_3 }}
 
     def detect_arduino(self) -> str:
         ports = [port.device for port in list_ports.comports()]
@@ -208,10 +214,10 @@ class AimAssistant:
                 np_frame = np.array(self.screen.grab(monitor))
                 pygame.event.pump()
 
-                # Offload CPU-bound tasks to a separate thread
-                frame = await self.loop.run_in_executor(None, self.mask_frame, self.preprocess_frame(np_frame))
-                detections = await self.loop.run_in_executor(None, self.yolo_handler.detect, frame)
-                targets, distances, coordinates = await self.loop.run_in_executor(None, self.process_detections, detections)
+                # Offload CPU-bound tasks to the ThreadPoolExecutor  # {{ edit_4 }}
+                frame = await self.loop.run_in_executor(self.process_pool, self.preprocess_frame, np_frame)
+                detections = await self.loop.run_in_executor(self.process_pool, self.yolo_handler.detect, frame)
+                targets, distances, coordinates = await self.loop.run_in_executor(self.process_pool, self.process_detections, detections)
 
                 send_targets(
                     self.controller,
@@ -298,6 +304,7 @@ class AimAssistant:
         try:
             self.loop.run_until_complete(self.run_async())
         finally:
+            self.process_pool.shutdown()  # {{ edit_5 }} Shutdown ThreadPoolExecutor
             self.loop.close()
 
     def run(self) -> None:
