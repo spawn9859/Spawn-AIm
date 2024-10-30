@@ -208,6 +208,7 @@ class MainWindow:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 frame = cv2.resize(frame, (240, 240))
                 image = Image.fromarray(frame)
+                image = image.resize((240, 240))
                 draw = ImageDraw.Draw(image)
                 
                 # Draw bounding boxes

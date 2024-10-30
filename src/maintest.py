@@ -230,12 +230,13 @@ class AimAssistant:
                     get_right_trigger,
                 )
 
-                self.main_window.root.after(
-                    0, self.main_window.update_preview, np_frame, coordinates, targets, distances
-                )
-
-                if self.config_manager.get_setting("overlay"):
-                    self.main_window.root.after(0, self.main_window.update_overlay, coordinates)
+                # Batch GUI updates to reduce frequency
+                if frame_count % 2 == 0:
+                    self.main_window.root.after(
+                        0, self.main_window.update_preview, np_frame, coordinates, targets, distances
+                    )
+                    if self.config_manager.get_setting("overlay"):
+                        self.main_window.root.after(0, self.main_window.update_overlay, coordinates)
 
                 elapsed = time.time() - start_time
                 if elapsed >= 0.2:

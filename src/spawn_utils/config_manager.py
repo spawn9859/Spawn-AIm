@@ -10,6 +10,7 @@ class ConfigManager:
         self.settings = self.load_settings()
         self.key_mapping = self.load_key_mapping()
         self.settings["show_fov"] = False
+        self.settings_cache = {}
         self.load_settings()
         
 
@@ -84,10 +85,15 @@ class ConfigManager:
             json.dump(self.settings, f, indent=4)
 
     def get_setting(self, key):
-        return self.settings.get(key)
+        if key in self.settings_cache:
+            return self.settings_cache[key]
+        value = self.settings.get(key)
+        self.settings_cache[key] = value
+        return value
 
     def update_setting(self, key, value):
         self.settings[key] = value
+        self.settings_cache[key] = value
         self.save_settings()
 
     def get_key_code(self, key):

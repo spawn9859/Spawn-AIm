@@ -44,7 +44,7 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
 
         _move_mouse(mouse_move_x, mouse_move_y, settings)
 
-        if settings["trigger_bot"]:
+        if settings["trigger_bot"] and distances[min_index] <= settings["trigger_bot_distance"]:
             trigger_bot(target_x, target_y, settings)
 
 def _move_mouse(move_x, move_y, settings):
