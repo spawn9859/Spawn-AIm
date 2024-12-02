@@ -23,7 +23,7 @@ def initialize_input_device():
 def get_left_trigger(input_device):
     """Get activation input value from either controller or mouse"""
     current_time = time.time()
-    if current_time - input_device["last_poll"] < 0.05:
+    if current_time - input_device["last_poll"] < 0.01:  # Reduce polling interval
         return input_device.get("last_left_trigger", 0.0)
     input_device["last_poll"] = current_time
     if input_device["type"] == "controller":

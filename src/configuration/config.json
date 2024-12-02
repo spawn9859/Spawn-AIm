@@ -1,6 +1,6 @@
 {
-    "auto_aim": false,
-    "trigger_bot": false,
+    "auto_aim": true,
+    "trigger_bot": true,
     "toggle": false,
     "recoil": false,
     "aim_shake": false,
@@ -8,9 +8,9 @@
     "preview": false,
     "mask_left": true,
     "mask_right": false,
-    "sensitivity": 16.0,
-    "headshot": 30.0,
-    "trigger_bot_distance": 5.2,
+    "sensitivity": 13.4,
+    "headshot": 32.6,
+    "trigger_bot_distance": 4,
     "recoil_strength": 0,
     "aim_shake_strength": 5,
     "max_move": 100,
@@ -54,8 +54,8 @@
     "aimShakeyStrength": 5,
     "toggleable": false,
     "gameTitle": "Fortnite",
-    "fov_enabled": "on",
-    "fov_size": 140,
+    "fov_enabled": true,
+    "fov_size": 142,
     "fov": "on",
     "show_fov": false,
     "fps": 165,
@@ -63,5 +63,5 @@
     "confidence_threshold": 0.6,
     "recoil_control": "off",
     "auto_aim_toggle": false,
-    "input_type": "mouse"
+    "input_type": "controller"
 }

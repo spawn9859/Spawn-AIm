@@ -3,13 +3,12 @@ import sv_ttk
 import cv2
 from PIL import Image, ImageTk, ImageDraw
 from .components import create_checkboxes, create_sliders, create_comboboxes, create_buttons, create_labels
+from spawn_utils.config_manager import ConfigManager
 import numpy as np
 import win32gui
 import win32con
 import win32api
 import threading
-import queue
-import time
 import logging
 
 # Configure logging
@@ -22,7 +21,7 @@ logging.basicConfig(
 )
 
 class MainWindow:
-    def __init__(self, config_manager):
+    def __init__(self, config_manager: ConfigManager):
         self.root = ctk.CTk()
         self.root.title("Spawn-Aim")
         self.root.geometry("800x900")
@@ -39,6 +38,7 @@ class MainWindow:
         
         self.running = True
         self.root.after(100, self.periodic_update)  # Start periodic updates
+        self.lock = threading.Lock()
 
     def periodic_update(self):
         if self.running:
@@ -202,46 +202,47 @@ class MainWindow:
         else:
             self.preview_label.pack_forget()
 
-    def update_preview(self, frame, coordinates, targets, distances):
+    def update_preview(self, frame: np.ndarray, coordinates: np.ndarray, targets: np.ndarray, distances: np.ndarray) -> None:
         if self.config_manager.get_setting("preview"):
-            try:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = cv2.resize(frame, (240, 240))
-                image = Image.fromarray(frame)
-                image = image.resize((240, 240))
-                draw = ImageDraw.Draw(image)
-                
-                # Draw bounding boxes
-                for coord in coordinates:
-                    x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
-                    draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-                
-                # Draw aim lines
-                center_x, center_y = 120, 120
-                if len(targets) > 0:
-                    min_distance_index = np.argmin(distances)
-                    for i, (target_x, target_y) in enumerate(targets):
-                        color = "yellow" if i == min_distance_index else "blue"
-                        scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
-                        scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
-                        draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
-                        draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
+            with self.lock:
+                try:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    frame = cv2.resize(frame, (240, 240))
+                    image = Image.fromarray(frame)
+                    image = image.resize((240, 240))
+                    draw = ImageDraw.Draw(image)
+                    
+                    # Draw bounding boxes
+                    for coord in coordinates:
+                        x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
+                        draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
+                    
+                    # Draw aim lines
+                    center_x, center_y = 120, 120
+                    if len(targets) > 0:
+                        min_distance_index = np.argmin(distances)
+                        for i, (target_x, target_y) in enumerate(targets):
+                            color = "yellow" if i == min_distance_index else "blue"
+                            scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
+                            scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
+                            draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
+                            draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
 
-                # Draw FOV circle if enabled
-                if self.config_manager.get_setting("show_fov"):
-                    fov_size = self.config_manager.get_setting("fov_size")
-                    scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
-                    draw.ellipse(
-                        [center_x - scaled_fov_size, center_y - scaled_fov_size,
-                         center_x + scaled_fov_size, center_y + scaled_fov_size],
-                        outline="red", width=2
-                    )
+                    # Draw FOV circle if enabled
+                    if self.config_manager.get_setting("show_fov"):
+                        fov_size = self.config_manager.get_setting("fov_size")
+                        scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
+                        draw.ellipse(
+                            [center_x - scaled_fov_size, center_y - scaled_fov_size,
+                             center_x + scaled_fov_size, center_y + scaled_fov_size],
+                            outline="red", width=2
+                        )
 
-                self.preview_photo = ImageTk.PhotoImage(image=image)
-                self.preview_label.configure(image=self.preview_photo)
-                self.preview_label.image = self.preview_photo
-            except Exception as e:
-                logging.error(f"Failed to update preview: {e}")
+                    self.preview_photo = ImageTk.PhotoImage(image=image)
+                    self.preview_label.configure(image=self.preview_photo)
+                    self.preview_label.image = self.preview_photo
+                except Exception as e:
+                    logging.error(f"Failed to update preview: {e}")
 
     def update_fps_label(self, fps):
         self.root.after(0, self._update_fps_label_gui, fps)

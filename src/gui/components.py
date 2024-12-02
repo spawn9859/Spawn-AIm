@@ -1,6 +1,8 @@
 import customtkinter as ctk
+from typing import Callable, Dict
+from spawn_utils.config_manager import ConfigManager
 
-def create_checkboxes(root, config_manager, update_callback):
+def create_checkboxes(root: 'ctk.CTkFrame', config_manager: ConfigManager, update_callback: Callable[[str, bool], None]) -> Dict[str, 'ctk.CTkCheckBox']:
     checkboxes = {}
     checkbox_configs = [
         ("auto_aim", "Auto aim"),
@@ -14,7 +16,7 @@ def create_checkboxes(root, config_manager, update_callback):
         ("mask_right", "Mask right"),
     ]
 
-    for i, (key, text) in enumerate(checkbox_configs):
+    for key, text in checkbox_configs:
         var = ctk.BooleanVar(value=config_manager.get_setting(key))
         checkbox = ctk.CTkCheckBox(
             root,
@@ -22,12 +24,10 @@ def create_checkboxes(root, config_manager, update_callback):
             variable=var,
             command=lambda k=key, v=var: update_callback(k, v.get()),
         )
-        checkbox.grid(row=i//3, column=i%3, padx=5, pady=2, sticky="w")
+        checkbox.pack(anchor="w", padx=5, pady=2)
         checkboxes[key] = checkbox
 
     return checkboxes
-
-# In components.py
 
 def create_sliders(root, config_manager, update_callback, slider_configs=None):
     sliders = {}
@@ -62,7 +62,7 @@ def create_sliders(root, config_manager, update_callback, slider_configs=None):
             frame,
             from_=from_,
             to=to,
-            command=lambda value, k=key, l=label, t=text: slider_event(value, k, l, t, update_callback),
+            command=lambda value, k=key, lbl=label, t=text: slider_event(value, k, lbl, t, update_callback),
         )
         slider.set(current_value)
         slider.pack(side="right", expand=True, fill="x", padx=10)

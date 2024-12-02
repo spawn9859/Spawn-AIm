@@ -32,14 +32,15 @@ class YOLOHandler:
             )
         else:  # PyTorch or TensorRT
             model_path = f"{self.models_path}/{self.get_model_name()}"
+            torch.backends.cudnn.benchmark = True  # Enable CuDNN auto-tuner for better performance
             self.model = torch.hub.load(
                 "ultralytics/yolov5",
                 "custom",
                 path=model_path,
                 verbose=False,
                 trust_repo=True,
-                force_reload=True,
-            )
+                force_reload=False,  # Avoid unnecessary reloading
+            ).to('cuda' if torch.cuda.is_available() else 'cpu')  # Use GPU if available
 
         print("Model loaded.")
 
@@ -47,9 +48,7 @@ class YOLOHandler:
         if self.config_manager.get_setting("yolo_mode") in ("pytorch", "tensorrt"):
             self.model.conf = self.config_manager.get_setting("confidence") / 100
             self.model.iou = self.config_manager.get_setting("confidence") / 100
-            results = self.model(frame, size=[self.config_manager.get_setting("height"), self.config_manager.get_setting("width")])
-            
-            # YOLOv5 format
+            results = self.model(frame, size=self.config_manager.get_setting("width"))
             return results.xyxy[0].cpu().numpy()
         elif self.config_manager.get_setting("yolo_mode") == "onnx":
             img = self.preprocess_image(frame)

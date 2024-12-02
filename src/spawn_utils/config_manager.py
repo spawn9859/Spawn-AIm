@@ -1,24 +1,28 @@
 import json
 import os
 import logging
+from typing import Any, Dict
 
 class ConfigManager:
-    def __init__(self, settings_profile):
+    def __init__(self, settings_profile: str):
         self.script_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self.config_path = os.path.join(self.script_dir, "configuration", f"{settings_profile.lower()}.json")
         self.key_mapping_path = os.path.join(self.script_dir, "configuration", "key_mapping.json")
+        self.settings_cache: Dict[str, Any] = {}
         self.settings = self.load_settings()
         self.key_mapping = self.load_key_mapping()
         self.settings["show_fov"] = False
-        self.settings_cache = {}
-        self.load_settings()
+        # Removed redundant load_settings call
         
 
-    def load_settings(self):
-        with open(self.config_path, "r") as f:
-            self.settings = json.load(f)
-        
-        self.validate_settings()  # Moved before return
+    def load_settings(self) -> Dict[str, Any]:
+        try:
+            with open(self.config_path, "r") as f:
+                self.settings = json.load(f)
+            self.validate_settings()
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.error(f"Failed to load settings: {e}")
+            self.settings = {}
         return self.settings
 
     def validate_settings(self):
