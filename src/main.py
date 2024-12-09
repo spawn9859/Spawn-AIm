@@ -1,3 +1,5 @@
+# main.py
+
 from line_profiler import profile
 import os
 import sys
@@ -23,6 +25,7 @@ from core.send_targets import send_targets
 from gui.main_window import MainWindow
 from spawn_utils.config_manager import ConfigManager
 from spawn_utils.yolo_handler import YOLOHandler
+import cv2
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -39,10 +42,20 @@ MODELS_PATH = os.path.join(SCRIPT_DIR, "models")
 screen = None
 random_x, random_y, arduino = 0, 0, None
 
-@numba.jit(nopython=True)
-def calculate_targets_numba(boxes, width, height, headshot_percent):
-    width_half = width / 2
-    height_half = height / 2
+@numba.jit(nopython=True, fastmath=True)
+def calculate_targets_numba(boxes, width_half, height_half, headshot_percent):
+    """
+    Calculates target coordinates and distances using Numba for performance.
+
+    Args:
+        boxes (np.ndarray): Array of bounding boxes.
+        width_half (float): Half the width of the screen.
+        height_half (float): Half the height of the screen.
+        headshot_percent (float): Percentage adjustment for headshots.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Target coordinates and distances.
+    """
     
     x = ((boxes[:, 0] + boxes[:, 2]) / 2) - width_half
     y = ((boxes[:, 1] + boxes[:, 3]) / 2) + headshot_percent * (boxes[:, 1] - ((boxes[:, 1] + boxes[:, 3]) / 2)) - height_half
@@ -53,6 +66,15 @@ def calculate_targets_numba(boxes, width, height, headshot_percent):
     return targets, distances
 
 def preprocess_frame(np_frame):
+    """
+    Preprocesses the frame by removing the alpha channel if present.
+
+    Args:
+        np_frame (np.ndarray): Input frame.
+
+    Returns:
+        np.ndarray: Processed frame.
+    """
     if np_frame.shape[2] == 4:
         return np_frame[:, :, :3]
     return np_frame
@@ -91,51 +113,80 @@ def update_aim_shake():
         random_x = 0
         random_y = 0
 
-def mask_frame(frame):
-    """Masks out specified regions of the frame."""
+def mask_frame(frame, config_manager):
+    """
+    Masks out specified regions of the frame using vectorized operations.
+
+    Args:
+        frame (np.ndarray): Input frame.
+        config_manager (ConfigManager): Configuration manager instance.
+
+    Returns:
+        np.ndarray: Masked frame.
+    """
     if config_manager.get_setting("mask_left") == "on":
-        frame[
-            int(config_manager.get_setting("height") - config_manager.get_setting("mask_height")) : config_manager.get_setting("height"),
-            0 : int(config_manager.get_setting("mask_width")),
-            :,
-        ] = 0
+        mask_height = int(config_manager.get_setting("mask_height"))
+        mask_width = int(config_manager.get_setting("mask_width"))
+        height = int(config_manager.get_setting("height"))
+        frame[height - mask_height:height, 0:mask_width, :] = 0
     if config_manager.get_setting("mask_right") == "on":
-        frame[
-            int(config_manager.get_setting("height") - config_manager.get_setting("mask_height")) : config_manager.get_setting("height"),
-            int(config_manager.get_setting("width") - config_manager.get_setting("mask_width")) : config_manager.get_setting("width"),
-            :,
-        ] = 0
+        mask_height = int(config_manager.get_setting("mask_height"))
+        mask_width = int(config_manager.get_setting("mask_width"))
+        height = int(config_manager.get_setting("height"))
+        width = int(config_manager.get_setting("width"))
+        frame[height - mask_height:height, width - mask_width:width, :] = 0
     return frame
 
-def initialize_game_window():
+def initialize_game_window(config_manager):
+    """
+    Initializes the game window and returns the screen capture region.
+
+    Args:
+        config_manager (ConfigManager): Configuration manager instance.
+
+    Returns:
+        dict: Screen capture region.
+    """
     global screen
-    left = int(win32api.GetSystemMetrics(0) / 2 - config_manager.get_setting("width") / 2)
-    top = int(win32api.GetSystemMetrics(1) / 2 - config_manager.get_setting("height") / 2)
-    right = left + config_manager.get_setting("width")
-    bottom = top + config_manager.get_setting("height")
+    width = int(config_manager.get_setting("width"))
+    height = int(config_manager.get_setting("height"))
+    left = int(win32api.GetSystemMetrics(0) / 2 - width / 2)
+    top = int(win32api.GetSystemMetrics(1) / 2 - height / 2)
 
     screen = mss.mss()
-    return {"top": top, "left": left, "width": config_manager.get_setting("width"), "height": config_manager.get_setting("height")}
+    return {"top": top, "left": left, "width": width, "height": height}
 
 @profile
-def process_detections(detections):
+def process_detections(detections, config_manager):
+    """
+    Processes YOLO detections, calculates targets, and filters by FOV.
+
+    Args:
+        detections (np.ndarray): YOLO detection results.
+        config_manager (ConfigManager): Configuration manager instance.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: Targets, distances, and coordinates.
+    """
     targets = np.empty((0, 2), dtype=np.float32)
     distances = np.empty(0, dtype=np.float32)
     coordinates = np.empty((0, 4), dtype=np.float32)
 
     if detections.shape[0] > 0:
-        # Process detections
-        valid_detections = detections[:, 4] > config_manager.get_setting("confidence") / 100
+        confidence_threshold = config_manager.get_setting("confidence") / 100
+        valid_detections = detections[:, 4] > confidence_threshold
         boxes = detections[valid_detections, :4]
-        confs = detections[valid_detections, 4]
-        classes = detections[valid_detections, 5]
-
+        
         if boxes.shape[0] > 0:
+            width_half = config_manager.get_setting("width") / 2
+            height_half = config_manager.get_setting("height") / 2
+            headshot_percent = config_manager.get_setting("headshot") / 100
+
             targets, distances = calculate_targets_numba(
                 boxes,
-                config_manager.get_setting("width"),
-                config_manager.get_setting("height"),
-                config_manager.get_setting("headshot") / 100,
+                width_half,
+                height_half,
+                headshot_percent,
             )
             coordinates = boxes
 
@@ -149,25 +200,37 @@ def process_detections(detections):
     return targets, distances, coordinates
 
 @profile
-def main_loop(controller, main_window, yolo_handler, monitor):
+def main_loop(controller, main_window, yolo_handler, monitor, config_manager):
+    """
+    Main processing loop for handling frame capture, detection, and UI updates.
+
+    Args:
+        controller: Game controller instance.
+        main_window (MainWindow): Main window instance.
+        yolo_handler (YOLOHandler): YOLO handler instance.
+        monitor (dict): Screen capture region.
+        config_manager (ConfigManager): Configuration manager instance.
+    """
     start_time = time.time()
     frame_count = 0
     pressing = False
 
+    @profile  # Uncomment this decorator
     def process_frame():
         nonlocal frame_count, start_time, pressing
+
+        iteration_start_time = time.time()
 
         frame_count += 1
         np_frame = preprocess_frame(np.array(screen.grab(monitor)))
         pygame.event.pump()
-
-        if np_frame.shape[2] == 4:
-            np_frame = np_frame[:, :, :3]
+        
+        frame = cv2.resize(np_frame, (config_manager.get_setting("width"), config_manager.get_setting("height")))
 
         with torch.no_grad():
-            frame = mask_frame(np_frame)
+            frame = mask_frame(frame, config_manager)
             detections = yolo_handler.detect(frame)
-            targets, distances, coordinates = process_detections(detections)
+            targets, distances, coordinates = process_detections(detections, config_manager)
 
         send_targets(
             controller,
@@ -180,7 +243,7 @@ def main_loop(controller, main_window, yolo_handler, monitor):
             get_right_trigger,
         )
 
-        main_window.update_preview(np_frame, coordinates, targets, distances)
+        main_window.update_preview(frame, coordinates, targets, distances)
 
         if config_manager.get_setting("overlay") == "on":
            main_window.update_overlay(coordinates)
@@ -204,14 +267,24 @@ def main_loop(controller, main_window, yolo_handler, monitor):
             main_window.on_closing()
             return
 
+        iteration_end_time = time.time()
+        iteration_duration = iteration_end_time - iteration_start_time
+        print(f"Iteration Time: {iteration_duration:.4f} seconds")
+
         if main_window.running:
             main_window.root.after(1, process_frame)
 
     main_window.root.after(1, process_frame)
     main_window.run()
 
-@profile
+#@profile
 def main(**argv):
+    """
+    Main function to initialize settings, create the main window, and start the processing loop.
+
+    Args:
+        **argv: Command-line arguments.
+    """
     global config_manager
 
     # Initialize ConfigManager
@@ -301,9 +374,9 @@ def main(**argv):
 
     try:
         # Initialize screen capture
-        monitor = initialize_game_window()
+        monitor = initialize_game_window(config_manager)
 
-        main_loop(controller, main_window, yolo_handler, monitor)
+        main_loop(controller, main_window, yolo_handler, monitor, config_manager)
 
     except Exception as e:
         pr_red(f"An error occurred: {str(e)}")

@@ -1,3 +1,5 @@
+# send_targets.py
+
 import numpy as np
 import ctypes
 import time
@@ -7,6 +9,19 @@ user32 = ctypes.windll.user32
 user32.mouse_event.argtypes = [ctypes.c_uint, ctypes.c_long, ctypes.c_long, ctypes.c_uint, ctypes.c_void_p]
 
 def send_targets(controller, settings, targets, distances, random_x, random_y, get_left_trigger, get_right_trigger):
+    """
+    Sends target coordinates to the mouse input handler.
+
+    Args:
+        controller: Game controller instance.
+        settings (dict): Configuration settings.
+        targets (np.ndarray): Target coordinates.
+        distances (np.ndarray): Distances to targets.
+        random_x (int): Random X offset for aim shake.
+        random_y (int): Random Y offset for aim shake.
+        get_left_trigger: Function to get left trigger value.
+        get_right_trigger: Function to get right trigger value.
+    """
     if distances.size == 0:
         return
 
@@ -38,14 +53,30 @@ def send_targets(controller, settings, targets, distances, random_x, random_y, g
             trigger_bot(target_x, target_y, settings)
 
 def _move_mouse(move_x, move_y, settings):
+    """
+    Moves the mouse using either Arduino or direct input.
+
+    Args:
+        move_x (int): X-axis movement.
+        move_y (int): Y-axis movement.
+        settings (dict): Configuration settings.
+    """
     if settings["mouse_input"] == "arduino":
         settings["arduino"].write(f"{move_x}:{move_y}:0x".encode())
     else:
         user32.mouse_event(win32con.MOUSEEVENTF_MOVE, move_x, move_y, 0, None)
 
 def trigger_bot(target_x, target_y, settings):
+    """
+    Activates the trigger bot if the target is within the trigger distance.
+
+    Args:
+        target_x (float): X-coordinate of the target.
+        target_y (float): Y-coordinate of the target.
+        settings (dict): Configuration settings.
+    """
     trigger_distance = round(settings["trigger_bot_distance"])
     if abs(target_x) <= trigger_distance and abs(target_y) <= trigger_distance:
         user32.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, None)
-        time.sleep(0.01)
+        time.sleep(0.01)  # Short delay to simulate a click
         user32.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, None)
