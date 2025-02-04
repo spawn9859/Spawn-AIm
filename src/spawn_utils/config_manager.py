@@ -7,15 +7,15 @@ class ConfigManager:
         self.config_path = os.path.join(self.script_dir, "configuration", f"{settings_profile.lower()}.json")
         self.key_mapping_path = os.path.join(self.script_dir, "configuration", "key_mapping.json")
         self.settings = self.load_settings()
+        # Call validation once after loading settings.
+        self.validate_settings()
         self.key_mapping = self.load_key_mapping()
         self.settings["show_fov"] = "off"
-        self.load_settings()
         
-
     def load_settings(self):
         with open(self.config_path, "r") as f:
             return json.load(f)
-        self.validate_settings()
+        # ...removed unreachable call to validate_settings()...
 
     def validate_settings(self):
         default_values = {
@@ -59,7 +59,6 @@ class ConfigManager:
             if key not in self.settings or not isinstance(self.settings[key], type(default_value)):
                 self.settings[key] = default_value
         
-
     def load_key_mapping(self):
         with open(self.key_mapping_path, "r") as f:
             return json.load(f)

@@ -196,33 +196,29 @@ class MainWindow:
             frame = cv2.resize(frame, (240, 240))
             image = Image.fromarray(frame)
             draw = ImageDraw.Draw(image)
-            
-            # Draw bounding boxes
-            for coord in coordinates:
-                x1, y1, x2, y2 = [int(c * 240 / self.config_manager.get_setting("width")) for c in coord]
-                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
-            
-            # Draw aim lines
+            # Cache preview parameters
+            preview_width = self.config_manager.get_setting("width")
+            preview_height = self.config_manager.get_setting("height")
+            fov_size = self.config_manager.get_setting("fov_size")
             center_x, center_y = 120, 120
+            for coord in coordinates:
+                x1, y1, x2, y2 = [int(c * 240 / preview_width) for c in coord]
+                draw.rectangle([x1, y1, x2, y2], outline="red", width=2)
             if len(targets) > 0:
                 min_distance_index = np.argmin(distances)
                 for i, (target_x, target_y) in enumerate(targets):
                     color = "yellow" if i == min_distance_index else "blue"
-                    scaled_x = int(target_x * 240 / self.config_manager.get_setting("width")) + center_x
-                    scaled_y = int(target_y * 240 / self.config_manager.get_setting("height")) + center_y
+                    scaled_x = int(target_x * 240 / preview_width) + center_x
+                    scaled_y = int(target_y * 240 / preview_height) + center_y
                     draw.line((center_x, center_y, scaled_x, scaled_y), fill=color, width=2)
                     draw.ellipse((scaled_x-3, scaled_y-3, scaled_x+3, scaled_y+3), fill=color)
-
-            # Draw FOV circle if enabled
             if self.config_manager.get_setting("show_fov") == "on":
-                fov_size = self.config_manager.get_setting("fov_size")
-                scaled_fov_size = int(fov_size * 240 / self.config_manager.get_setting("width"))
+                scaled_fov_size = int(fov_size * 240 / preview_width)
                 draw.ellipse(
                     [center_x - scaled_fov_size, center_y - scaled_fov_size,
                      center_x + scaled_fov_size, center_y + scaled_fov_size],
                     outline="red", width=2
                 )
-
             photo = ImageTk.PhotoImage(image=image)
             self.preview_label.configure(image=photo)
             self.preview_label.image = photo

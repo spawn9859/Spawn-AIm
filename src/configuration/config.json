@@ -30,7 +30,7 @@
     "arduino": "COM1",
     "max_fps": 175,
     "movementAmp": 0.16,
-    "confidence": 73.2,
+    "confidence": 61.3,
     "headshotMode": true,
     "headshotDistanceModifier": 0.3,
     "displayCPS": true,

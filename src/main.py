@@ -5,18 +5,13 @@ import json
 import time
 import random
 import numba
-import threading
 import torch
 import numpy as np
 import pygame
 import serial
-import onnxruntime as ort
 import serial.tools.list_ports
 from colorama import Fore, Style
 import win32api
-from utils.general import non_max_suppression
-from ultralytics import YOLO
-from ultralytics.utils import ops
 import mss
 from controller_setup import initialize_pygame_and_controller, get_left_trigger, get_right_trigger
 from core.send_targets import send_targets
@@ -37,9 +32,9 @@ if torch.cuda.is_available():
 MODELS_PATH = os.path.join(SCRIPT_DIR, "models")
 
 screen = None
-random_x, random_y, arduino = 0, 0, None
+arduino = None
 
-@numba.jit(nopython=True)
+@numba.njit(parallel=True)
 def calculate_targets_numba(boxes, width, height, headshot_percent):
     width_half = width / 2
     height_half = height / 2
@@ -80,17 +75,6 @@ def get_keycode(key):
     """Gets the virtual key code for a given key."""
     return config_manager.get_key_code(key) or win32api.VkKeyScan(key)
 
-def update_aim_shake():
-    """Updates random aim shake offsets."""
-    global random_x, random_y
-    if config_manager.get_setting("aim_shake") == "on":
-        aim_shake_strength = int(config_manager.get_setting("aim_shake_strength"))
-        random_x = random.randint(-aim_shake_strength, aim_shake_strength)
-        random_y = random.randint(-aim_shake_strength, aim_shake_strength)
-    else:
-        random_x = 0
-        random_y = 0
-
 def mask_frame(frame):
     """Masks out specified regions of the frame."""
     if config_manager.get_setting("mask_left") == "on":
@@ -119,13 +103,19 @@ def initialize_game_window():
 
 @profile
 def process_detections(detections):
+    # Cache configuration values
+    conf_threshold = config_manager.get_setting("confidence") / 100
+    width = config_manager.get_setting("width")
+    height = config_manager.get_setting("height")
+    headshot = config_manager.get_setting("headshot") / 100
+    
     targets = np.empty((0, 2), dtype=np.float32)
     distances = np.empty(0, dtype=np.float32)
     coordinates = np.empty((0, 4), dtype=np.float32)
 
     if detections.shape[0] > 0:
         # Process detections
-        valid_detections = detections[:, 4] > config_manager.get_setting("confidence") / 100
+        valid_detections = detections[:, 4] > conf_threshold
         boxes = detections[valid_detections, :4]
         confs = detections[valid_detections, 4]
         classes = detections[valid_detections, 5]
@@ -133,9 +123,9 @@ def process_detections(detections):
         if boxes.shape[0] > 0:
             targets, distances = calculate_targets_numba(
                 boxes,
-                config_manager.get_setting("width"),
-                config_manager.get_setting("height"),
-                config_manager.get_setting("headshot") / 100,
+                width,
+                height,
+                headshot,
             )
             coordinates = boxes
 
@@ -153,29 +143,28 @@ def main_loop(controller, main_window, yolo_handler, monitor):
     start_time = time.time()
     frame_count = 0
     pressing = False
+    aim_shake = (0, 0)  # Local tuple for (random_x, random_y)
 
     def process_frame():
-        nonlocal frame_count, start_time, pressing
+        nonlocal frame_count, start_time, pressing, aim_shake
 
         frame_count += 1
         np_frame = preprocess_frame(np.array(screen.grab(monitor)))
         pygame.event.pump()
-
-        if np_frame.shape[2] == 4:
-            np_frame = np_frame[:, :, :3]
 
         with torch.no_grad():
             frame = mask_frame(np_frame)
             detections = yolo_handler.detect(frame)
             targets, distances, coordinates = process_detections(detections)
 
+        # Use local aim_shake values when sending targets.
         send_targets(
             controller,
             config_manager.settings,
             targets,
             distances,
-            random_x,
-            random_y,
+            aim_shake[0],
+            aim_shake[1],
             get_left_trigger,
             get_right_trigger,
         )
@@ -190,7 +179,12 @@ def main_loop(controller, main_window, yolo_handler, monitor):
            main_window.update_fps_label(round(frame_count / elapsed_time))
            frame_count = 0
            start_time = time.time()
-           update_aim_shake()
+           # Update aim shake offsets locally rather than using a separate function.
+           if config_manager.get_setting("aim_shake") == "on":
+               strength = int(config_manager.get_setting("aim_shake_strength"))
+               aim_shake = (random.randint(-strength, strength), random.randint(-strength, strength))
+           else:
+               aim_shake = (0, 0)
 
         if config_manager.get_setting("toggle") == "on":
            trigger_value = get_left_trigger(controller)
