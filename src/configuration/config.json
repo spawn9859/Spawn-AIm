@@ -5,7 +5,7 @@
     "recoil": "off",
     "aim_shake": "off",
     "overlay": "off",
-    "preview": "off",
+    "preview": "on",
     "mask_left": "on",
     "mask_right": "off",
     "sensitivity": 16.0,

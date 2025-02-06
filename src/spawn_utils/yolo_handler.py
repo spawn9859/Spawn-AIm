@@ -14,9 +14,14 @@ class YOLOHandler:
 
     def load_model(self):
         self.model_existence_check()
-        print(f"Loading {self.get_model_name()} with yolov5 for {self.config_manager.get_setting('yolo_mode')} inference.")
-
-        if self.config_manager.get_setting("yolo_mode") == "onnx":
+        yolo_version = self.config_manager.get_setting("yolo_version")
+        print(f"Loading {self.get_model_name()} with yolov{yolo_version[-1]} for {self.config_manager.get_setting('yolo_mode')} inference.")
+        
+        if yolo_version == "v8":
+            from ultralytics import YOLO  # New import for YOLOv8
+            model_path = f"{self.models_path}/{self.get_model_name()}"
+            self.model = YOLO(model_path)
+        elif self.config_manager.get_setting("yolo_mode") == "onnx":
             onnx_provider = {
                 "cpu": "CPUExecutionProvider",
                 "amd": "DmlExecutionProvider",
@@ -30,7 +35,7 @@ class YOLOHandler:
                 sess_options=so,
                 providers=[onnx_provider],
             )
-        else:  # PyTorch or TensorRT
+        else:  # PyTorch or TensorRT for yolov5
             model_path = f"{self.models_path}/{self.get_model_name()}"
             self.model = torch.hub.load(
                 "ultralytics/yolov5",
@@ -40,11 +45,15 @@ class YOLOHandler:
                 trust_repo=True,
                 force_reload=True,
             )
-
         print("Model loaded.")
 
     def detect(self, frame):
-        if self.config_manager.get_setting("yolo_mode") in ("pytorch", "tensorrt"):
+        yolo_version = self.config_manager.get_setting("yolo_version")
+        if yolo_version == "v8":
+            results = self.model(frame, verbose=False)
+            # YOLOv8 returns a list; get the first result's boxes.
+            return results[0].boxes.xyxy.cpu().numpy()
+        elif self.config_manager.get_setting("yolo_mode") in ("pytorch", "tensorrt"):
             self.model.conf = self.config_manager.get_setting("confidence") / 100
             self.model.iou = self.config_manager.get_setting("confidence") / 100
             results = self.model(frame, size=[self.config_manager.get_setting("height"), self.config_manager.get_setting("width")])
